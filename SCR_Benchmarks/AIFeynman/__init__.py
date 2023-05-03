@@ -1,0 +1,1 @@
+from AIFeynman import feynman
