@@ -13,7 +13,7 @@
     year={2020},
     publisher={American Association for the Advancement of Science}
   }
-  Equations and variable ranges copied from https://space.mit.edu/home/tegmark/aifeynman.html 
+  Equations and variable ranges copied from https://space.mit.edu/home/tegmark/aifeynman.html but with chapter/equation naming corrections from Udrescu et al.
 """
 from collections import OrderedDict
 
@@ -21,6 +21,7 @@ import numpy as np
 import sympy
 
 from SCR_Benchmarks.base import KnownEquation
+import SCR_Benchmarks.Constants.StringKeys as sk
 from SCR_Benchmarks.registry import register_eq_class
 from SCR_Benchmarks.sampling import DefaultSampling, IntegerSampling, SimpleSampling
 
@@ -29,6 +30,7 @@ FEYNMAN_EQUATION_CLASS_DICT = OrderedDict()
 def register_feynman_eq_class(cls):
     register_eq_class(cls)
     FEYNMAN_EQUATION_CLASS_DICT[cls.__name__] = cls
+    cls._eq_source = sk.AIF_SOURCE_QUALIFIER
     return cls
 
 
@@ -580,9 +582,9 @@ class FeynmanICh15Eq3t(KnownEquation):
   
 
 @register_feynman_eq_class
-class FeynmanICh15Eq1(KnownEquation):
+class FeynmanICh15Eq10(KnownEquation):
     """
-    - Equation: I.15.1
+    - Equation: I.15.10
     - Raw: m_0*v/sqrt(1-v**2/c**2)
     - Num. Vars: 3
     - Vars:
@@ -590,7 +592,7 @@ class FeynmanICh15Eq1(KnownEquation):
         - x[1]: v (float, default range (1.0,2.0))
         - x[2]: c (float, default range (3.0,10.0))
     """
-    _eq_name = 'feynman-i.15.1'
+    _eq_name = 'feynman-i.15.10'
 
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
@@ -698,9 +700,9 @@ class FeynmanICh18Eq12(KnownEquation):
   
 
 @register_feynman_eq_class
-class FeynmanICh18Eq14(KnownEquation):
+class FeynmanICh18Eq16(KnownEquation):
     """
-    - Equation: I.18.14
+    - Equation: I.18.16
     - Raw: m*r*v*sin(theta)
     - Num. Vars: 4
     - Vars:
@@ -709,7 +711,7 @@ class FeynmanICh18Eq14(KnownEquation):
         - x[2]: v (float, default range (1.0,5.0))
         - x[3]: theta (float, default range (1.0,5.0))
     """
-    _eq_name = 'feynman-i.18.14'
+    _eq_name = 'feynman-i.18.16'
 
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
@@ -1056,9 +1058,9 @@ class FeynmanICh34Eq8(KnownEquation):
   
 
 @register_feynman_eq_class
-class FeynmanICh34Eq1(KnownEquation):
+class FeynmanICh34Eq10(KnownEquation):
     """
-    - Equation: I.34.1
+    - Equation: I.34.10
     - Raw: omega_0/(1-v/c)
     - Num. Vars: 3
     - Vars:
@@ -1066,7 +1068,7 @@ class FeynmanICh34Eq1(KnownEquation):
         - x[1]: v (float, default range (1.0,2.0))
         - x[2]: omega_0 (float, default range (1.0,5.0))
     """
-    _eq_name = 'feynman-i.34.1'
+    _eq_name = 'feynman-i.34.10'
 
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
@@ -1201,16 +1203,16 @@ class FeynmanICh38Eq12(KnownEquation):
   
 
 @register_feynman_eq_class
-class FeynmanICh39Eq1(KnownEquation):
+class FeynmanICh39Eq10(KnownEquation):
     """
-    - Equation: I.39.1
+    - Equation: I.39.10
     - Raw: 3/2*pr*V
     - Num. Vars: 2
     - Vars:
         - x[0]: pr (float, default range (1.0,5.0))
         - x[1]: V (float, default range (1.0,5.0))
     """
-    _eq_name = 'feynman-i.39.1'
+    _eq_name = 'feynman-i.39.10'
 
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
@@ -1473,10 +1475,10 @@ class FeynmanICh44Eq4(KnownEquation):
 
         super().__init__(num_vars=5, sampling_objs=sampling_objs)
         x = self.x
-        self.sympy_eq = x[0]*x[1]*x[2]*lx[0](x[4]/x[3])
+        self.sympy_eq = x[0]*x[1]*x[2]*sympy.log(x[4]/x[3])
 
     def eq_func(self, x):
-        return x[0]*x[1]*x[2]*lx[0](x[4]/x[3])
+        return x[0]*x[1]*x[2]*np.log(x[4]/x[3])
   
 
 @register_feynman_eq_class

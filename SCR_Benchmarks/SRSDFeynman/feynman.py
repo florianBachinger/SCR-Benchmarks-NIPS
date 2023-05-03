@@ -14,6 +14,7 @@ from collections import OrderedDict
 import numpy as np
 import sympy
 
+from SCR_Benchmarks.Constants import StringKeys as sk
 from SCR_Benchmarks.base import KnownEquation
 from SCR_Benchmarks.registry import register_eq_class
 from SCR_Benchmarks.sampling import DefaultSampling, IntegerSampling, SimpleSampling
@@ -34,6 +35,7 @@ FINE_STRUCTURE_CONSTANT = 7.2973525693e-3
 def register_feynman_eq_class(cls):
     register_eq_class(cls)
     FEYNMAN_EQUATION_CLASS_DICT[cls.__name__] = cls
+    cls._eq_source = sk.SRSDF_SOURCE_QUALIFIER
     return cls
 
 
@@ -132,7 +134,6 @@ class FeynmanICh8Eq14(KnownEquation):
     - Constraints:
     """
     _eq_name = 'feynman-i.8.14'
-
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
             sampling_objs = [

@@ -38,7 +38,7 @@ lines.append("""
     year={2020},
     publisher={American Association for the Advancement of Science}
   }
-  Equations and variable ranges copied from https://space.mit.edu/home/tegmark/aifeynman.html 
+  Equations and variable ranges copied from https://space.mit.edu/home/tegmark/aifeynman.html but with chapter/equation naming corrections from Udrescu et al.
 \"\"\"
 from collections import OrderedDict
 
@@ -46,6 +46,7 @@ import numpy as np
 import sympy
 
 from SCR_Benchmarks.base import KnownEquation
+import SCR_Benchmarks.Constants.StringKeys as sk
 from SCR_Benchmarks.registry import register_eq_class
 from SCR_Benchmarks.sampling import DefaultSampling, IntegerSampling, SimpleSampling
 
@@ -54,6 +55,7 @@ FEYNMAN_EQUATION_CLASS_DICT = OrderedDict()
 def register_feynman_eq_class(cls):
     register_eq_class(cls)
     FEYNMAN_EQUATION_CLASS_DICT[cls.__name__] = cls
+    cls._eq_source = sk.AIF_SOURCE_QUALIFIER
     return cls
 
 """)
@@ -120,16 +122,22 @@ for index, row in equations.iterrows():
     formula = formula.replace(f'arcsin', f'?7')
     formula = formula.replace(f'cos', f'?8')
     formula = formula.replace(f'sin', f'?9')
+    formula = formula.replace(f'ln', f'?10')
+    formula = formula.replace(f'pi', f'?11')
+    formula = formula.replace(f'tanh', f'?12')
     formula = formula.replace(name, f'x[{i}]')
-    formula = formula.replace(f'?1', f'{name}_')
-    formula = formula.replace(f'?2', f'{name}1')
-    formula = formula.replace(f'?3', f'x[')
-    formula = formula.replace(f'?4', f'sqrt')
-    formula = formula.replace(f'?5', f'exp')
-    formula = formula.replace(f'?6', f'arccos')
-    formula = formula.replace(f'?7', f'arcsin')
-    formula = formula.replace(f'?8', f'cos')
+    formula = formula.replace(f'?12', f'tanh')
+    formula = formula.replace(f'?11', f'pi')
+    formula = formula.replace(f'?10', f'ln')
     formula = formula.replace(f'?9', f'sin')
+    formula = formula.replace(f'?8', f'cos')
+    formula = formula.replace(f'?7', f'arcsin')
+    formula = formula.replace(f'?6', f'arccos')
+    formula = formula.replace(f'?5', f'exp')
+    formula = formula.replace(f'?4', f'sqrt')
+    formula = formula.replace(f'?3', f'x[')
+    formula = formula.replace(f'?2', f'{name}1')
+    formula = formula.replace(f'?1', f'{name}_')
 
   i = 0
   for (name, low, high) in variables:

@@ -12,14 +12,43 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 import sympy
 from sympy import Derivative, Matrix, Symbol, simplify, solve, lambdify
 from sympy.utilities.misc import func_name
+import SCR_Benchmarks.Constants.StringKeys as sk
+
+from SCR_Benchmarks.Info.feynman_aif_info import AIF_EQUATION_CONFIG_DICT as AIFConfig
+from SCR_Benchmarks.Info.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
+from SCR_Benchmarks.Info.feynman_aif_constraint_info import AIF_EQUATION_CONSTRAINTS as AIFConstraints
+from SCR_Benchmarks.Info.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
+
 
 FLOAT32_MAX = np.finfo(np.float32).max
 FLOAT32_MIN = np.finfo(np.float32).min
 FLOAT32_TINY = np.finfo(np.float32).tiny
 
+def get_constraint_descriptor(equation, eq, xs):
+    f = sympy.lambdify(equation.x, eq,"numpy")
+    #calculate gradient per data point
+    # gradients = np.array([ f(*row) for row in xs ])
+    #speedup of 5
+    f_v = np.vectorize(f)
+    gradients = f_v(*(xs.T))
+
+    unique_gradient_signs = set(np.unique(np.sign(gradients)))
+
+    if((unique_gradient_signs ==  set([-1])) or (unique_gradient_signs ==  set([-1, 0]))):
+      descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_DECREASING_CONSTRAINT
+    elif ((unique_gradient_signs ==  set([1])) or (unique_gradient_signs ==  set([0, 1]))):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_INCREASING_CONSTRAINT
+    elif ((unique_gradient_signs ==  set([-1, 1])) or (unique_gradient_signs ==  set([-1, 0, 1]))):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT
+    elif (unique_gradient_signs ==  set([0])):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_CONSTANT_CONSTRAINT
+    else:
+      raise "Unforseen sign values!"
+    return descriptor
 
 class KnownEquation(object):
     _eq_name = None
@@ -160,3 +189,113 @@ class KnownEquation(object):
         eq_func = lambdify(variables, sympy_eq, modules='numpy')
         ds.eq_func = lambda x: eq_func(*x).T
         return ds
+    
+    def to_dataframe(self, data):
+        columns = self.get_var_names()
+        columns.append(self.get_output_name())
+        return pd.DataFrame(data, columns= columns)
+    
+    def create_dataframe(self, sample_size, patience=10 ):
+        data = self.create_dataset(sample_size, patience)
+        return self.to_dataframe(data)
+    
+    
+    def create_input_dataset (self, sample_size, patience=10):
+      dataset = self.create_dataset(sample_size, patience)
+      return dataset[:,:-1]
+    
+    def get_inputs_from_dataset (self, dataset = None):
+      if(dataset == None):
+          dataset = self.create_dataset()
+      return dataset[:,:-1]
+    
+    def get_eq_name (self):
+      return self.__class__.__name__
+    
+    def get_eq_source (self):
+      return self._eq_source
+    
+    def get_eq_raw (self):
+      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
+          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_RAW_EXPRESSION_KEY]
+      if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
+          return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_RAW_EXPRESSION_KEY]
+      raise "no equation source specified, or equation is not supported"
+    
+    def get_sympy_eq_local_dict (self):
+      return { v.name:v for v in self.x}
+    
+    def get_var_names (self):
+      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
+          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
+      if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
+          return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
+      raise "no equation source specified, or equation is not supported"
+    
+    def get_output_name (self):
+      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
+          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_OUTPUT_KEY]
+      if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
+          return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_OUTPUT_KEY]
+      raise "no equation source specified, or equation is not supported"
+    
+
+    def get_constraints (self):
+      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
+          return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in AIFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.get_eq_name())
+      if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
+          return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.get_eq_name())
+          
+    
+    def check_constraints (self,equation_candidate, constraints = None, xs = None, use_display_names = False):
+      if( constraints is None):
+        constraints = self.get_constraints()
+
+      notNone_constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!='None']
+      if(len(notNone_constraints) == 0):
+          return True #no constraints to check
+
+      var_name_key = sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY
+      local_dict = self.get_sympy_eq_local_dict()
+      if(use_display_names):
+          var_name_key = sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY
+          local_dict = { c[var_name_key] : sympy.Symbol(c[var_name_key]) for c in constraints }
+
+      if( xs is None):
+        xs =self.create_input_dataset(sample_size = 1_000_000)
+
+      expr = sympy.parse_expr(equation_candidate, evaluate=False, local_dict= local_dict)
+      f_primes = [(sympy.Derivative(expr, local_dict[c[var_name_key]]).doit(),c) 
+                 for c
+                 in notNone_constraints ]
+      violated_constraints = []
+      for (derivative,known_constraint) in f_primes:
+        descriptor = get_constraint_descriptor(self, derivative,xs)
+        if(descriptor != known_constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
+            violated_constraints.append(known_constraint)
+
+      return (len(violated_constraints) == 0, violated_constraints)
+
+    def determine_constraints(self, xs = None, sample_size = 10_000_000):
+      if( xs is None):
+        xs =self.create_input_dataset(sample_size = sample_size)
+
+      f_prime = [(sympy.Derivative(self.sympy_eq, var).doit(),var, var_display_name) for (var,var_display_name) in list(zip(self.x, self.get_var_names()))]
+
+      constraints = []
+      for (derivative, var_name, var_display_name) in f_prime:
+        descriptor = get_constraint_descriptor(self, derivative,xs)
+        constraints.append({sk.EQUATION_CONFIG_DICT_VARIABLE_KEY:str(var_name),
+          sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
+          sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
+          sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
+          sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative)})
+        
+      return constraints
+          
+
+
+
+
+
+    
