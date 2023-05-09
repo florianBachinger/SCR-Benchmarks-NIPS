@@ -6,7 +6,7 @@
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "SCR_Benchmarks"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 # To install the library, run the following
 #
 # python setup.py install
@@ -16,6 +16,8 @@ VERSION = "0.1.0"
 
 REQUIRES = [
   "numpy >= 1.23.1",
+  "sympy >= 1.11.1",
+  "pandas >= 2.0.1",
 ]
 
 setup(
