@@ -276,7 +276,7 @@ class KnownEquation(object):
 
       return (len(violated_constraints) == 0, violated_constraints)
 
-    def determine_constraints(self, xs = None, sample_size = 10_000_000):
+    def determine_constraints(self, xs = None, sample_size = 1_000_000):
       if( xs is None):
         xs =self.create_input_dataset(sample_size = sample_size)
 
@@ -285,7 +285,7 @@ class KnownEquation(object):
       constraints = []
       for (derivative, var_name, var_display_name) in f_prime:
         descriptor = get_constraint_descriptor(self, derivative,xs)
-        constraints.append({sk.EQUATION_CONFIG_DICT_VARIABLE_KEY:str(var_name),
+        constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
           sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
           sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
           sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
