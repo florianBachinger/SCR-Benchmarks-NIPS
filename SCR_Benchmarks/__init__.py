@@ -10,6 +10,8 @@ __version__ = "0.1.0"
 # import ApiClient
 from SCR_Benchmarks import SRSDFeynman
 from SCR_Benchmarks import AIFeynman
+from SCR_Benchmarks import Constants
+from SCR_Benchmarks import Info
 from .base import KnownEquation
 from .base import get_constraint_descriptor
 from SCR_Benchmarks.Constants import StringKeys
