@@ -36,7 +36,7 @@ def CalculateEquation(equation, text_file):
           }))
   text_file.write(',')
 
-with open("SCR_Benchmarks/feynman_aif_constraint_info.py", "a") as text_file:
+with open("SCR_Benchmarks/Info/feynman_aif_constraint_info.py", "a") as text_file:
   text_file.write('AIF_EQUATION_CONSTRAINTS = [')
   #iterate over all equations
   for dictEntry in aif.AllEquations:
@@ -44,7 +44,7 @@ with open("SCR_Benchmarks/feynman_aif_constraint_info.py", "a") as text_file:
     CalculateEquation(equation, text_file)
   text_file.write(']')
 
-with open("SCR_Benchmarks/feynman_srsdf_constraint_info.py", "a") as text_file:
+with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "a") as text_file:
   text_file.write('SRSD_EQUATION_CONSTRAINTS = [')
   #iterate over all equations
   for dictEntry in srsdf.AllEquations:
