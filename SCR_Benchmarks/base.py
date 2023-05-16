@@ -318,7 +318,7 @@ class KnownEquation(object):
                                                           patience = 10_000_000)
                 )
 
-          sampling_space = { var.name: obj.get_value_range() for (var, obj) in split_objective}
+          sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
 
           descriptor =  get_constraint_descriptor(self, derivative,xs)
           if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
@@ -327,7 +327,8 @@ class KnownEquation(object):
               sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
               sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
               sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative),
-              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: str(sampling_space)  })
+              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: sampling_space  })
+      return constraints
           
 
 
