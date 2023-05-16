@@ -1,6 +1,6 @@
 """
   Copied April 2023 from https://github.com/omron-sinicx/srsd-benchmark under MIT licence
-  Credit Yoshitomo Matsubara:
+  Credit Matsubara et al.:
   @article{matsubara2022rethinking,
     title={Rethinking Symbolic Regression Datasets and Benchmarks for Scientific Discovery},
     author={Matsubara, Yoshitomo and Chiba, Naoya and Igarashi, Ryo and Tatsunori, Taniai and Ushiku, Yoshitaka},
@@ -121,25 +121,10 @@ class DefaultSampling(object):
         raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
                              f'self.uses_negative({self.uses_negative}) must be True')
     
-    def to_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ∪ [{self.min_value}, {self.max_value}] ⊆ R"
-        elif self.uses_positive:
-            return f"[{self.min_value}, {self.max_value}] ⊆ R"
-        elif self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ⊆ R"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
+    def to_uniform_sampling(self):
+        return SimpleSampling(self.min_value,self.max_value,self.uses_positive,self.uses_negative)
 
-    def to_latex_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"\mathbb{{R}}^{{\leq {-self.min_value}}}_{{\geq {-self.max_value}}} \cup \mathbb{{R}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_positive:
-            return f"\mathbb{{R}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_negative:
-            return f"\mathbb{{R}}^{{\leq {-self.min_value}}}_{{\geq {-self.max_value}}}"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
+
 
 @register_sampling_class
 class SimpleSampling(object):
@@ -170,25 +155,8 @@ class SimpleSampling(object):
         raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
                              f'self.uses_negative({self.uses_negative}) must be True')
     
-    def to_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ∪ [{self.min_value}, {self.max_value}] ⊆ R"
-        elif self.uses_positive:
-            return f"[{self.min_value}, {self.max_value}] ⊆ R"
-        elif self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ⊆ R"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
-
-    def to_latex_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"\mathbb{{R}}^{{\leq {-self.min_value}}}_{{\geq {-self.max_value}}} \cup \mathbb{{R}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_positive:
-            return f"\mathbb{{R}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_negative:
-            return f"\mathbb{{R}}^{{\leq {-self.min_value}}}_{{\geq {-self.max_value}}}"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
+    def to_uniform_sampling(self):
+        return self
 
 @register_sampling_class
 class IntegerSampling(object):
@@ -218,26 +186,9 @@ class IntegerSampling(object):
             return (-self.max_value, -self.min_value)
         raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
                              f'self.uses_negative({self.uses_negative}) must be True')
-    def to_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ∪ [{self.min_value}, {self.max_value}] ⊆ Z"
-        elif self.uses_positive:
-            return f"[{self.min_value}, {self.max_value}] ⊆ Z"
-        elif self.uses_negative:
-            return f"[{-self.max_value}, {-self.min_value}] ⊆ Z"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
 
-    def to_latex_string(self):
-        if self.uses_positive and self.uses_negative:
-            return f"\mathcal{{U}}_{{[\geq ]}} \cup \mathbb{{Z}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_positive:
-            return f"\mathbb{{Z}}^{{\leq {self.max_value}}}_{{\geq {self.min_value}}}"
-        elif self.uses_negative:
-            return f"\mathbb{{Z}}^{{\leq {-self.min_value}}}_{{\geq {-self.max_value}}}"
-        raise AttributeError(f'Either self.uses_positive ({self.uses_positive}) or '
-                             f'self.uses_negative({self.uses_negative}) must be True')
-        
+    def to_uniform_sampling(self):
+        return self
 
 def build_sampling_objs(sampling_obj_configs):
     sampling_obj_list = list()
@@ -247,3 +198,24 @@ def build_sampling_objs(sampling_obj_configs):
         sampling_obj = get_sampling_obj(sampling_type, **sampling_kwargs)
         sampling_obj_list.append(sampling_obj)
     return sampling_obj_list
+
+
+def to_string(SamplingObj):
+    if SamplingObj.uses_positive and SamplingObj.uses_negative:
+        return f"[{-SamplingObj.max_value}, {-SamplingObj.min_value}] ∪ [{SamplingObj.min_value}, {SamplingObj.max_value}] ⊆ R"
+    elif SamplingObj.uses_positive:
+        return f"[{SamplingObj.min_value}, {SamplingObj.max_value}] ⊆ R"
+    elif SamplingObj.uses_negative:
+        return f"[{-SamplingObj.max_value}, {-SamplingObj.min_value}] ⊆ R"
+    raise AttributeError(f'Either SamplingObj.uses_positive ({SamplingObj.uses_positive}) or '
+                          f'SamplingObj.uses_negative({SamplingObj.uses_negative}) must be True')
+
+def to_latex_string(SamplingObj):
+    if SamplingObj.uses_positive and SamplingObj.uses_negative:
+        return f"\mathbb{{R}}^{{\leq {-SamplingObj.min_value}}}_{{\geq {-SamplingObj.max_value}}} \cup \mathbb{{R}}^{{\leq {SamplingObj.max_value}}}_{{\geq {SamplingObj.min_value}}}"
+    elif SamplingObj.uses_positive:
+        return f"\mathbb{{R}}^{{\leq {SamplingObj.max_value}}}_{{\geq {SamplingObj.min_value}}}"
+    elif SamplingObj.uses_negative:
+        return f"\mathbb{{R}}^{{\leq {-SamplingObj.min_value}}}_{{\geq {-SamplingObj.max_value}}}"
+    raise AttributeError(f'Either SamplingObj.uses_positive ({SamplingObj.uses_positive}) or '
+                          f'SamplingObj.uses_negative({SamplingObj.uses_negative}) must be True')

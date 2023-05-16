@@ -276,7 +276,12 @@ class KnownEquation(object):
 
       split_objectives = []
       constraints = []
-      objectives= list(zip(self.x, self.sampling_objs))
+
+      objectives= list(
+         zip(
+          self.x,
+          [obj.to_uniform_sampling() for obj in self.sampling_objs]
+         ))
 
       split_objectives.append(objectives)
 
