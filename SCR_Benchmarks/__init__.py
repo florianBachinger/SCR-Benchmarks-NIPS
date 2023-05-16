@@ -13,7 +13,6 @@ from SCR_Benchmarks import AIFeynman
 from SCR_Benchmarks import Constants
 from SCR_Benchmarks import Info
 from .base import KnownEquation
-from .base import get_constraint_descriptor
 from SCR_Benchmarks.Constants import StringKeys
 from SCR_Benchmarks.Info.feynman_aif_constraint_info import AIF_EQUATION_CONSTRAINTS
 from SCR_Benchmarks.Info.feynman_aif_info import AIF_EQUATION_CONFIG_DICT

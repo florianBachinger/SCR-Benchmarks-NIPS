@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import sympy
+import copy
 from sympy import Derivative, Matrix, Symbol, simplify, solve, lambdify
 from sympy.utilities.misc import func_name
 import SCR_Benchmarks.Constants.StringKeys as sk
@@ -49,6 +50,35 @@ def get_constraint_descriptor(equation, eq, xs):
     else:
       raise "Unforseen sign values!"
     return descriptor
+
+def create_dataset_from_sampling_objectives(sampling_objs, sympy_eq,eq_func,check_if_valid, sample_size, patience=10, ):
+    warnings.filterwarnings('ignore')
+    assert len(sampling_objs) > 0, f'There should be at least one variable provided in `{sympy_eq}`'
+    xs = [sampling_func(sample_size) for sampling_func in sampling_objs]
+    y = eq_func(xs)
+    # Check if y contains NaN, Infinity, etc
+    valid_sample_flags = check_if_valid(y)
+    valid_sample_size = sum(valid_sample_flags)
+    if valid_sample_size == sample_size:
+        return np.array([*xs, y]).T
+
+    valid_xs = [x[valid_sample_flags] for x in xs]
+    valid_y = y[valid_sample_flags]
+    missed_sample_size = sample_size - valid_sample_size
+    for i in range(patience):
+        xs = [sampling_func(missed_sample_size * 2) for sampling_func in sampling_objs]
+        y = eq_func(xs)
+        valid_sample_flags = check_if_valid(y)
+        valid_xs = [np.concatenate([xs[i][valid_sample_flags], valid_xs[i]]) for i in range(len(xs))]
+        valid_y = np.concatenate([y[valid_sample_flags], valid_y])
+        valid_sample_size = len(valid_y)
+        if valid_sample_size >= sample_size:
+            xs = [x[:sample_size] for x in valid_xs]
+            y = valid_y[:sample_size]
+            return np.array([*xs, y]).T
+    raise TimeoutError(f'number of valid samples (`{len(valid_y)}`) did not reach to '
+                        f'{sample_size} within {patience} trials')
+
 
 class KnownEquation(object):
     _eq_name = None
@@ -109,32 +139,7 @@ class KnownEquation(object):
                (FLOAT32_MIN <= values) * (values <= FLOAT32_MAX) * (np.abs(values) >= FLOAT32_TINY)
 
     def create_dataset(self, sample_size, patience=10):
-        warnings.filterwarnings('ignore')
-        assert len(self.sampling_objs) > 0, f'There should be at least one variable provided in `{self.sympy_eq}`'
-        xs = [sampling_func(sample_size) for sampling_func in self.sampling_objs]
-        y = self.eq_func(xs)
-        # Check if y contains NaN, Infinity, etc
-        valid_sample_flags = self.check_if_valid(y)
-        valid_sample_size = sum(valid_sample_flags)
-        if valid_sample_size == sample_size:
-            return np.array([*xs, y]).T
-
-        valid_xs = [x[valid_sample_flags] for x in xs]
-        valid_y = y[valid_sample_flags]
-        missed_sample_size = sample_size - valid_sample_size
-        for i in range(patience):
-            xs = [sampling_func(missed_sample_size * 2) for sampling_func in self.sampling_objs]
-            y = self.eq_func(xs)
-            valid_sample_flags = self.check_if_valid(y)
-            valid_xs = [np.concatenate([xs[i][valid_sample_flags], valid_xs[i]]) for i in range(len(xs))]
-            valid_y = np.concatenate([y[valid_sample_flags], valid_y])
-            valid_sample_size = len(valid_y)
-            if valid_sample_size >= sample_size:
-                xs = [x[:sample_size] for x in valid_xs]
-                y = valid_y[:sample_size]
-                return np.array([*xs, y]).T
-        raise TimeoutError(f'number of valid samples (`{len(valid_y)}`) did not reach to '
-                           f'{sample_size} within {patience} trials')
+        return create_dataset_from_sampling_objectives(self.sampling_objs, self.sympy_eq, self.eq_func, self.check_if_valid, sample_size,patience)
 
     def find_stationary_points(self, excludes_saddle_points=False):
         if self.sympy_eq is None:
@@ -205,7 +210,7 @@ class KnownEquation(object):
       return dataset[:,:-1]
     
     def get_inputs_from_dataset (self, dataset = None):
-      if(dataset == None):
+      if(dataset is None):
           dataset = self.create_dataset()
       return dataset[:,:-1]
     
@@ -277,21 +282,52 @@ class KnownEquation(object):
       return (len(violated_constraints) == 0, violated_constraints)
 
     def determine_constraints(self, xs = None, sample_size = 1_000_000):
-      if( xs is None):
-        xs =self.create_input_dataset(sample_size = sample_size)
-
       f_prime = [(sympy.Derivative(self.sympy_eq, var).doit(),var, var_display_name) for (var,var_display_name) in list(zip(self.x, self.get_var_names()))]
 
+      split_objectives = []
       constraints = []
-      for (derivative, var_name, var_display_name) in f_prime:
-        descriptor = get_constraint_descriptor(self, derivative,xs)
-        constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
-          sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
-          sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
-          sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
-          sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative)})
-        
-      return constraints
+      objectives= list(zip(self.x, self.sampling_objs))
+
+      split_objectives.append(objectives)
+
+      for (var_name,objective ) in objectives:
+
+        if(objective.uses_positive and objective.uses_negative):
+          positive_copy = copy.deepcopy(split_objectives)
+          negative_copy = copy.deepcopy(split_objectives)
+          
+          for objs in positive_copy:
+            for (var, obj) in objs:
+              if(var == var_name):
+                obj.uses_negative = False
+          for objs in negative_copy:
+            for (var, obj) in objs:
+              if(var == var_name):
+                obj.uses_positive = False
+          split_objectives = positive_copy + negative_copy
+          
+      for split_objective in split_objectives:
+        for (derivative, var_name, var_display_name) in f_prime:
+          sampling_objectives = [obj for (var, obj) in split_objective]
+          xs = self.get_inputs_from_dataset(
+                  create_dataset_from_sampling_objectives(sampling_objectives, 
+                                                          self.sympy_eq, 
+                                                          self.eq_func, 
+                                                          self.check_if_valid, 
+                                                          sample_size,
+                                                          patience = 10_000_000)
+                )
+
+          sampling_space = { var.name: obj.get_value_range() for (var, obj) in split_objective}
+
+          descriptor =  get_constraint_descriptor(self, derivative,xs)
+          if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
+            constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
+              sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
+              sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
+              sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
+              sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative),
+              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: str(sampling_space)  })
           
 
 

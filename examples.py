@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 import SCR_Benchmarks.SRSDFeynman as srsdf
 import SCR_Benchmarks.AIFeynman as aif
 
@@ -16,4 +18,4 @@ print(ICh6Eq20b.check_constraints("x2",xs= xs))
 #prints false but uses display variable names
 print(ICh6Eq20b.check_constraints("theta",xs= xs, use_display_names=True))
 #prints true but uses display variable names
-print(ICh6Eq20b.check_constraints("sigma",xs= xs, use_display_names=True))
+print(ICh6Eq20b.check_constraints("theta1",xs= xs, use_display_names=True))
