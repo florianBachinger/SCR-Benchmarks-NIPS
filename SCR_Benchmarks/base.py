@@ -27,11 +27,16 @@ FLOAT32_MAX = np.finfo(np.float32).max
 FLOAT32_MIN = np.finfo(np.float32).min
 FLOAT32_TINY = np.finfo(np.float32).tiny
 
+
+FLOAT64_MAX = np.finfo(np.float64).max
+FLOAT64_MIN = np.finfo(np.float64).min
+FLOAT64_TINY = np.finfo(np.float64).tiny
+
 def get_constraint_descriptor(equation, eq, xs):
     f = sympy.lambdify(equation.x, eq,"numpy")
     #calculate gradient per data point
     # gradients = np.array([ f(*row) for row in xs ])
-    #speedup of 5
+    # speedup of 5:
     f_v = np.vectorize(f)
     gradients = f_v(*(xs.T))
 
@@ -134,7 +139,7 @@ class KnownEquation(object):
 
     def check_if_valid(self, values):
         return ~np.isnan(values) * ~np.isinf(values) * \
-               (FLOAT32_MIN <= values) * (values <= FLOAT32_MAX) * (np.abs(values) >= FLOAT32_TINY)
+               (FLOAT64_MIN <= values) * (values <= FLOAT64_MAX) * (np.abs(values) >= FLOAT64_TINY)
 
     def create_dataset(self, sample_size, patience=10):
         return create_dataset_from_sampling_objectives(self.sampling_objs, self.sympy_eq, self.eq_func, self.check_if_valid, sample_size,patience)
@@ -310,7 +315,7 @@ class KnownEquation(object):
                                                           self.eq_func, 
                                                           self.check_if_valid, 
                                                           sample_size,
-                                                          patience = 10_000_000)
+                                                          patience = 1_000_000)
                 )
 
           sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
