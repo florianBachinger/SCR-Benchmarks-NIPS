@@ -41,7 +41,6 @@ import SCR_Benchmarks
 import numpy as np
 import pandas as pd
 import SCR_Benchmarks.SRSDFeynman as srsdf
-import SCR_Benchmarks.AIFeynman as aif
 
 import time
 
@@ -63,8 +62,18 @@ Reference this work:
 ```bibtex
 
 ```
-Our contribution combines the work of the following two publications into one convenient package.
-We enhance their work by adding knowledge about the expected function shapes of the benchmark formulas. 
+We enhance the work of Matsubara et al. by determining the _shape constraints_ that describe the expected function shapes of the benchmark formulas. This knowledge can be used to enforce the behavior of trained prediction models and to e.g., improve extrapolation behavior.
+
+
+Credit to Matsubara et al. for reviewing and adapting the formulas and variable ranges of Udrescu et al. to reasonable sampling values:
+```bibtex
+  @article{matsubara2022rethinking,
+    title={Rethinking Symbolic Regression Datasets and Benchmarks for Scientific Discovery},
+    author={Matsubara, Yoshitomo and Chiba, Naoya and Igarashi, Ryo and Tatsunori, Taniai and Ushiku, Yoshitaka},
+    journal={arXiv preprint arXiv:2206.10540},
+    year={2022}
+  }
+```
 
 Credit to Udrescu et al. for the initial benchmark set:
 ```bibtex
@@ -77,15 +86,5 @@ Credit to Udrescu et al. for the initial benchmark set:
     pages={eaay2631},
     year={2020},
     publisher={American Association for the Advancement of Science}
-  }
-```
-
-Credit to Matsubara et al. for reviewing and adapting the formulas and variable ranges to reasonable sampling values:
-```bibtex
-  @article{matsubara2022rethinking,
-    title={Rethinking Symbolic Regression Datasets and Benchmarks for Scientific Discovery},
-    author={Matsubara, Yoshitomo and Chiba, Naoya and Igarashi, Ryo and Tatsunori, Taniai and Ushiku, Yoshitaka},
-    journal={arXiv preprint arXiv:2206.10540},
-    year={2022}
   }
 ```

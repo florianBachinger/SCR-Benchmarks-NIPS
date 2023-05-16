@@ -3,7 +3,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import SCR_Benchmarks.SRSDFeynman as srsdf
-import SCR_Benchmarks.AIFeynman as aif
 
 import time
 

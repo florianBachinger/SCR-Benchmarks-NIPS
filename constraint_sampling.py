@@ -5,8 +5,7 @@ from SCR_Benchmarks.Constants import StringKeys as sk
 from SCR_Benchmarks.base import get_constraint_descriptor
 from SCR_Benchmarks.base import create_dataset_from_sampling_objectives
 import SCR_Benchmarks.SRSDFeynman as srsdf
-import SCR_Benchmarks.AIFeynman as aif
-import copy 
+import copy
 f = srsdf.FeynmanICh6Eq20()
 
 sample_size = 1_000_000

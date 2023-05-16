@@ -1,6 +1,6 @@
 """
   Copied April 2023 from https://github.com/omron-sinicx/srsd-benchmark under MIT licence
-  Credit Yoshitomo Matsubara:
+  Credit Matsubara et al.:
   @article{matsubara2022rethinking,
     title={Rethinking Symbolic Regression Datasets and Benchmarks for Scientific Discovery},
     author={Matsubara, Yoshitomo and Chiba, Naoya and Igarashi, Ryo and Tatsunori, Taniai and Ushiku, Yoshitaka},
@@ -19,9 +19,7 @@ from sympy import Derivative, Matrix, Symbol, simplify, solve, lambdify
 from sympy.utilities.misc import func_name
 import SCR_Benchmarks.Constants.StringKeys as sk
 
-from SCR_Benchmarks.Info.feynman_aif_info import AIF_EQUATION_CONFIG_DICT as AIFConfig
 from SCR_Benchmarks.Info.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
-from SCR_Benchmarks.Info.feynman_aif_constraint_info import AIF_EQUATION_CONSTRAINTS as AIFConstraints
 from SCR_Benchmarks.Info.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
 
 
@@ -221,8 +219,6 @@ class KnownEquation(object):
       return self._eq_source
     
     def get_eq_raw (self):
-      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
-          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_RAW_EXPRESSION_KEY]
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_RAW_EXPRESSION_KEY]
       raise "no equation source specified, or equation is not supported"
@@ -231,23 +227,17 @@ class KnownEquation(object):
       return { v.name:v for v in self.x}
     
     def get_var_names (self):
-      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
-          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
       raise "no equation source specified, or equation is not supported"
     
     def get_output_name (self):
-      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
-          return AIFConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_OUTPUT_KEY]
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_OUTPUT_KEY]
       raise "no equation source specified, or equation is not supported"
     
 
     def get_constraints (self):
-      if(self.get_eq_source() == sk.AIF_SOURCE_QUALIFIER):
-          return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in AIFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.get_eq_name())
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.get_eq_name())
           

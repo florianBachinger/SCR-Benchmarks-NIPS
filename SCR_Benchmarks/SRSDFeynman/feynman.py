@@ -1,6 +1,6 @@
 """
   Copied April 2023 from https://github.com/omron-sinicx/srsd-benchmark under MIT licence
-  Credit Yoshitomo Matsubara:
+  Credit Matsubara et al.:
   @article{matsubara2022rethinking,
     title={Rethinking Symbolic Regression Datasets and Benchmarks for Scientific Discovery},
     author={Matsubara, Yoshitomo and Chiba, Naoya and Igarashi, Ryo and Tatsunori, Taniai and Ushiku, Yoshitaka},

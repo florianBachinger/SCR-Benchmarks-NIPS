@@ -2,7 +2,6 @@ import json
 import numpy as np
 import sympy
 
-import SCR_Benchmarks.AIFeynman as aif
 import SCR_Benchmarks.SRSDFeynman as srsdf
 import SCR_Benchmarks.Constants.StringKeys as sk
 import SCR_Benchmarks.base as base
@@ -36,13 +35,6 @@ def CalculateEquation(equation, text_file):
           }))
   text_file.write(',')
 
-with open("SCR_Benchmarks/Info/feynman_aif_constraint_info.py", "a") as text_file:
-  text_file.write('AIF_EQUATION_CONSTRAINTS = [')
-  #iterate over all equations
-  for dictEntry in aif.AllEquations:
-    equation = aif.AllEquations[dictEntry]()
-    CalculateEquation(equation, text_file)
-  text_file.write(']')
 
 with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "a") as text_file:
   text_file.write('SRSD_EQUATION_CONSTRAINTS = [')

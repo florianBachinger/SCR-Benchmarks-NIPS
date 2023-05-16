@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 
 import SCR_Benchmarks.SRSDFeynman as srsdf
-import SCR_Benchmarks.AIFeynman as aif
 
 for name in srsdf.AllEquations:
     eq = srsdf.AllEquations[name]()
