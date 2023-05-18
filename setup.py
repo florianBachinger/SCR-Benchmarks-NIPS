@@ -30,7 +30,7 @@ setup(
     keywords=["Benchmark","Shape Constrained Regression", "Symbolic Regression", "SymReg"],
     python_requires=">=3.6",
     install_requires=REQUIRES,
-    packages=find_packages(exclude=["test", "tests"]),
+    packages=find_packages(exclude=["test", "tests","example","examples"]),
     include_package_data=True,
     long_description="""\
     No description provided

@@ -6,6 +6,6 @@ from SCR_Benchmarks.base import get_constraint_descriptor
 from SCR_Benchmarks.base import create_dataset_from_sampling_objectives
 import SCR_Benchmarks.SRSDFeynman as srsdf
 import copy
-f = srsdf.FeynmanICh6Eq20()
+f = srsdf.FeynmanBonus6()
 
 print (f.determine_constraints())

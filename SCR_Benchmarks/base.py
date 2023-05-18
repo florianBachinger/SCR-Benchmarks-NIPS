@@ -69,7 +69,8 @@ def create_dataset_from_sampling_objectives(sampling_objs, sympy_eq,eq_func,chec
     valid_y = y[valid_sample_flags]
     missed_sample_size = sample_size - valid_sample_size
     for i in range(patience):
-        xs = [sampling_func(missed_sample_size * 2) for sampling_func in sampling_objs]
+        print(f'patience {i}/{patience} remaining size {missed_sample_size}')
+        xs = [sampling_func(missed_sample_size * 5) for sampling_func in sampling_objs]
         y = eq_func(xs)
         valid_sample_flags = check_if_valid(y)
         valid_xs = [np.concatenate([xs[i][valid_sample_flags], valid_xs[i]]) for i in range(len(xs))]
@@ -231,6 +232,9 @@ class KnownEquation(object):
     def get_sympy_eq_local_dict (self):
       return { v.name:v for v in self.x}
     
+    def get_vars (self):
+      return self.x
+    
     def get_var_names (self):
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
@@ -308,6 +312,10 @@ class KnownEquation(object):
           
       for split_objective in split_objectives:
         for (derivative, var_name, var_display_name) in f_prime:
+
+          sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
+          print(f'> partial derivative over {var_name} with space {sampling_space}')
+
           sampling_objectives = [obj for (var, obj) in split_objective]
           xs = self.get_inputs_from_dataset(
                   create_dataset_from_sampling_objectives(sampling_objectives, 
@@ -318,7 +326,6 @@ class KnownEquation(object):
                                                           patience = 1_000_000)
                 )
 
-          sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
 
           descriptor =  get_constraint_descriptor(self, derivative,xs)
           if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):

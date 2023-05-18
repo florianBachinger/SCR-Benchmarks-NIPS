@@ -2,6 +2,10 @@ import json
 import numpy as np
 import sympy
 
+with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "w") as text_file:
+  text_file.write('SRSD_EQUATION_CONSTRAINTS = []')
+
+
 import SCR_Benchmarks.SRSDFeynman as srsdf
 import SCR_Benchmarks.Constants.StringKeys as sk
 import SCR_Benchmarks.base as base
@@ -36,7 +40,7 @@ def CalculateEquation(equation, text_file):
   text_file.write(',')
 
 
-with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "a") as text_file:
+with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "w") as text_file:
   text_file.write('SRSD_EQUATION_CONSTRAINTS = [')
   #iterate over all equations
   for dictEntry in srsdf.AllEquations:
