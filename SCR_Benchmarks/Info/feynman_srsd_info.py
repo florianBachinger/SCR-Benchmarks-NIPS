@@ -30,7 +30,7 @@ SRSD_EQUATION_CONFIG_DICT = {
     },
   
     "FeynmanICh9Eq18": {
-        "EquationRaw" : "6.6743e-11 * m1 * m2 / ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)",
+        "EquationRaw" : "6.67430e-11 * m1 * m2 / ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)",
         "variables" : ["m1","m2","x2","x1","y2","y1","z2","z1"],
         "output" : "F"
     },
@@ -90,7 +90,7 @@ SRSD_EQUATION_CONFIG_DICT = {
     },
   
     "FeynmanICh14Eq3": {
-        "EquationRaw" : "9.8066 * m * z",
+        "EquationRaw" : "9.80665 * m * z",
         "variables" : ["m","z"],
         "output" : "U"
     },
@@ -108,7 +108,7 @@ SRSD_EQUATION_CONFIG_DICT = {
     },
   
     "FeynmanICh15Eq3t": {
-        "EquationRaw" : "(t - u * x / c ** 2) / sqrt(1 - u ** 2 / 2.99792458e8 ** 2)",
+        "EquationRaw" : "(t - u * x / 2.99792458e8 ** 2) / sqrt(1 - u ** 2 / 2.99792458e8 ** 2)",
         "variables" : ["t","u","x"],
         "output" : "t1"
     },
@@ -606,7 +606,7 @@ SRSD_EQUATION_CONFIG_DICT = {
     },
   
     "FeynmanBonus1": {
-        "EquationRaw" : "(Z_1 * Z_2 * alpha * 1.054571817e-34 * 2.99792458e8 / (4 * E_n * sin(theta / 2) ** 2)) ** 2",
+        "EquationRaw" : "(Z_1 * Z_2 * 7.2973525693e-3 * 1.054571817e-34 * 2.99792458e8 / (4 * E_n * sin(theta / 2) ** 2)) ** 2",
         "variables" : ["Z_1","Z_2","E_n","theta"],
         "output" : "A"
     },
@@ -678,8 +678,8 @@ SRSD_EQUATION_CONFIG_DICT = {
     },
   
     "FeynmanBonus13": {
-        "EquationRaw" : "1 / (4 * pi * epsilon) * q / sqrt(r ** 2 + d ** 2 - 2 * r * d * cos(alpha))",
-        "variables" : ["epsilon","q","r","d","alpha"],
+        "EquationRaw" : "1 / (4 * pi * 8.854e-12) * q / sqrt(r ** 2 + d ** 2 - 2 * r * d * cos(alpha))",
+        "variables" : ["q","r","d","alpha"],
         "output" : "Volt"
     },
   

@@ -153,7 +153,7 @@ class FeynmanICh8Eq14(KnownEquation):
 class FeynmanICh9Eq18(KnownEquation):
     """
     - Equation: I.9.18
-    - Raw: 6.6743e-11 * m1 * m2 / ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+    - Raw: 6.67430e-11 * m1 * m2 / ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
     - Num. Vars: 9
     - Vars:
         - x[0]: m1 (float, positive)
@@ -458,7 +458,7 @@ class FeynmanICh13Eq12(KnownEquation):
 class FeynmanICh14Eq3(KnownEquation):
     """
     - Equation: I.14.3
-    - Raw: 9.8066 * m * z
+    - Raw: 9.80665 * m * z
     - Num. Vars: 2
     - Vars:
         - x[0]: m (float, positive)
@@ -534,7 +534,7 @@ class FeynmanICh15Eq10(KnownEquation):
 class FeynmanICh15Eq3t(KnownEquation):
     """
     - Equation: I.15.3t
-    - Raw: (t - u * x / c ** 2) / sqrt(1 - u ** 2 / 2.99792458e8 ** 2)
+    - Raw: (t - u * x / 2.99792458e8 ** 2) / sqrt(1 - u ** 2 / 2.99792458e8 ** 2)
     - Num. Vars: 3
     - Vars:
         - x[0]: t (float, positive)
@@ -1086,7 +1086,7 @@ class FeynmanICh34Eq14(KnownEquation):
         self.sympy_eq = (1 + x[0] / SPEED_OF_LIGHT) / sympy.sqrt(1 - x[0] ** 2 / SPEED_OF_LIGHT ** 2) * x[1]
 
     def eq_func(self, x):
-        return (1 + x[0] / x[1]) / np.sqrt(1 - x[0] ** 2 / x[1] ** 2) * x[1]
+        return (1 + x[0] / SPEED_OF_LIGHT) / np.sqrt(1 - x[0] ** 2 / SPEED_OF_LIGHT ** 2) * x[1]
 
 
 @register_feynman_eq_class
@@ -2973,7 +2973,7 @@ class FeynmanIIICh21Eq20(KnownEquation):
 class FeynmanBonus1(KnownEquation):
     """
     - Equation: Rutherford scattering
-    - Raw: (Z_1 * Z_2 * alpha * 1.054571817e-34 * 2.99792458e8 / (4 * E_n * sin(theta / 2) ** 2)) ** 2
+    - Raw: (Z_1 * Z_2 * 7.2973525693e-3 * 1.054571817e-34 * 2.99792458e8 / (4 * E_n * sin(theta / 2) ** 2)) ** 2
     - Num. Vars: 4
     - Vars:
         - x[0]: Z_1 (integer, positive)
@@ -3164,6 +3164,7 @@ class FeynmanBonus6(KnownEquation):
         - x[6] != 0
         - 1 + 2 * x[0] * x[1] * x[2] ** 2 / (x[3] * (x[4] * x[5] * x[6] ** 2) ** 2) >= 0
     """
+    # https://www.math.toronto.edu/khesin/biblio/GoldsteinPooleSafkoClassicalMechanics.pdf
     _eq_name = 'feynman-bonus.6'
 
     def __init__(self, sampling_objs=None):
@@ -3178,10 +3179,10 @@ class FeynmanBonus6(KnownEquation):
 
         super().__init__(num_vars=7, sampling_objs=sampling_objs)
         x = self.x
-        self.sympy_eq = sympy.sqrt(1 + 2 * x[0] * x[1] * x[2] ** 2 / (x[3] * (x[4] * x[5] * x[6] ** 2) ** 2))
+        self.sympy_eq = sympy.sqrt(1+2*x[0]**2*x[1]*x[2]**2/(x[3]*(x[4]*x[5]*x[6]**2)**2))
 
     def eq_func(self, x):
-        return np.sqrt(1 + 2 * x[0] * x[1] * x[2] ** 2 / (x[3] * (x[4] * x[5] * x[6] ** 2) ** 2))
+        return np.sqrt(1+2*x[0]**2*x[1]*x[2]**2/(x[3]*(x[4]*x[5]*x[6]**2)**2))
 
 
 @register_feynman_eq_class
@@ -3373,35 +3374,33 @@ class FeynmanBonus12(KnownEquation):
 class FeynmanBonus13(KnownEquation):
     """
     - Equation: 3.45 Jackson
-    - Raw: 1 / (4 * pi * epsilon) * q / sqrt(r ** 2 + d ** 2 - 2 * r * d * cos(alpha))
+    - Raw: 1 / (4 * pi * 8.854e-12) * q / sqrt(r ** 2 + d ** 2 - 2 * r * d * cos(alpha))
     - Num. Vars: 5
     - Vars:
-        - x[0]: epsilon (float, positive)
-        - x[1]: q (float)
-        - x[2]: r (float, positive)
-        - x[3]: d (float, positive)
-        - x[4]: alpha (float, positive)
+        - x[0]: q (float)
+        - x[1]: r (float, positive)
+        - x[2]: d (float, positive)
+        - x[3]: alpha (float, positive)
     - Constraints:
-        - x[2] ** 2 + x[3] ** 2 - 2 * x[2] * x[3] * np.cos(x[4]) > 0
+        - x[1] ** 2 + x[2] ** 2 - 2 * x[1] * x[2] * np.cos(x[3]) > 0
     """
     _eq_name = 'feynman-bonus.13'
 
     def __init__(self, sampling_objs=None):
         if sampling_objs is None:
             sampling_objs = [
-                DefaultSampling(1.0e-12, 1.0e-10, uses_negative=False),
                 DefaultSampling(1.0e-3, 1.0e-1), DefaultSampling(1.0e-2, 1.0, uses_negative=False),
                 DefaultSampling(1.0e-2, 1.0, uses_negative=False), SimpleSampling(0, np.pi, uses_negative=False)
             ]
 
-        super().__init__(num_vars=5, sampling_objs=sampling_objs)
+        super().__init__(num_vars=4, sampling_objs=sampling_objs)
         x = self.x
-        self.sympy_eq = 1 / (4 * sympy.pi * x[0]) * x[1] \
-                        / sympy.sqrt(x[2] ** 2 + x[3] ** 2 - 2 * x[2] * x[3] * sympy.cos(x[4]))
+        self.sympy_eq = 1 / (4 * sympy.pi * ELECTRIC_CONSTANT) * x[0] \
+                        / sympy.sqrt(x[1] ** 2 + x[2] ** 2 - 2 * x[1] * x[2] * sympy.cos(x[3]))
 
     def eq_func(self, x):
-        return 1 / (4 * np.pi * ELECTRIC_CONSTANT) * x[1] \
-               / np.sqrt(x[2] ** 2 + x[3] ** 2 - 2 * x[2] * x[3] * np.cos(x[4]))
+        return 1 / (4 * np.pi * ELECTRIC_CONSTANT) * x[0] \
+               / np.sqrt(x[1] ** 2 + x[2] ** 2 - 2 * x[1] * x[2] * np.cos(x[3]))
 
 
 @register_feynman_eq_class
