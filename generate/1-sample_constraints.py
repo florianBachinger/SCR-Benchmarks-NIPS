@@ -32,6 +32,11 @@ def CalculateEquation(equation_class, text_file):
 
   constraints = scr.determine_constraints()
 
+  i = 1
+  for constraint in constraints:
+     constraint.id = i
+     i = i+1
+
   text_file.write(str( {sk.EQUATION_EQUATION_NAME_KEY:scr.equation.get_eq_name(),
         sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY: constraints
           }))

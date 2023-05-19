@@ -4,9 +4,10 @@ import numpy as np
 import copy
 import SCR_Benchmarks.Constants.StringKeys as sk
 
+SAMPLE_SIZE = 1_000_000
 
-def get_constraint_descriptor(equation, eq, xs):
-    f = sympy.lambdify(equation.x, eq,"numpy")
+def get_constraint_descriptor( eq, local_dict, xs):
+    f = sympy.lambdify(local_dict, eq,"numpy")
     #calculate gradient per data point
     # gradients = np.array([ f(*row) for row in xs ])
     # speedup of 5:
@@ -38,49 +39,84 @@ class SCRBenchmark(object):
         self.constraints = self.equation.get_constraints()
 
         if(initialize_datasets_on_creation):
-          self.datasets = self.initialize_datasets()
+          self.datasets = self.initialize_datasets_for_constraint_checking()
         
-    def initialize_datasets(self):
-      return
-      notNone_constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!='None']
-      if(len(notNone_constraints) == 0):
+    def initialize_datasets_for_constraint_checking(self):
+      constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
+      self.datasets = {}
+      if(len(constraints) == 0):
           raise Warning( f"equation {self.equation._eq_name} has to constraints to be checked. all checks will return true.")
+      for constraint in constraints:
+         self.datasets[constraint[sk.EQUATION_CONSTRAINTS_ID_KEY]] = np.random.uniform(
+              [low for (low, _) in [ eval(var_range) for var_range in constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY].values()]],
+              [high for (_, high) in [ eval(var_range) for var_range in constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY].values()]],
+              (SAMPLE_SIZE,self.equation.get_var_count())
+            )
 
     def check_constraints (self, equation_candidate, use_display_names = False):
       constraints = self.equation.get_constraints()
 
-      notNone_constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!='None']
-      if(len(notNone_constraints) == 0):
+      constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
+      if(len(constraints) == 0):
           return True #no constraints to check
       
       if(self.datasets is None):
-          self.initialize_datasets()
+          self.initialize_datasets_for_constraint_checking()
 
-
-      var_name_key = sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY
+      # replace the sympy local dictionary with the display names of variables if specified
       local_dict = self.equation.get_sympy_eq_local_dict()
       if(use_display_names):
-          var_name_key = sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY
-          local_dict = { c[var_name_key] : sympy.Symbol(c[var_name_key]) for c in constraints }
+          local_dict = { c : sympy.Symbol(c) for c in self.equation.get_var_names()}
 
-      if( xs is None):
-        xs =self.equation.create_input_dataset(sample_size = 1_000_000)
-
+      # parse the provided candidate expression
+      # will use display names if specified
       expr = sympy.parse_expr(equation_candidate, evaluate=False, local_dict= local_dict)
-      f_primes = [(sympy.Derivative(expr, local_dict[c[var_name_key]]).doit(),c) 
-                 for c
-                 in notNone_constraints ]
+
+      #calculate all first order partial derivatives of the expression 
+      f_primes = [(sympy.Derivative(expr, var).doit(),var.name, 1) 
+                 for var
+                 in local_dict.values()]
+      
+      #calculate all second order partial derivatives of the expression (every possible combination [Hessian])
+      f_prime_mat = [[ (sympy.Derivative(f_prime, var).doit(), f'[{prime_var_name},{var}]', 2 ) 
+                        for var
+                        in local_dict.values()] 
+                     for (f_prime, prime_var_name, _) 
+                     in f_primes]
+      
+      #flatten 2d Hessian to 1d list and combine them 
+      f_prime_mat_flattened = [item for sublist in f_prime_mat for item in sublist]
+      derviatives = f_primes+f_prime_mat_flattened
+      
+      
       violated_constraints = []
-      for (derivative,known_constraint) in f_primes:
-        descriptor = get_constraint_descriptor(self.equation, derivative,xs)
-        if(descriptor != known_constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
-            violated_constraints.append(known_constraint)
+      #check for all existing constraints if they are met
+      for constraint in constraints:
+        #every constraint has a specific input range in which they apply
+        xs = self.datasets[constraint[sk.EQUATION_CONSTRAINTS_ID_KEY]]
+
+        #the current constraint to be checked matches only one of derivatives (all possible combinations are derived)
+        if(use_display_names):
+          matches = [ derivative for (derivative, var, _) in derviatives if var == constraint[sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY]]
+        else:
+          matches = [ derivative for (derivative, var, _) in derviatives if var == constraint[sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY]]
+
+        if(len(matches)>1):
+           raise "derivatives are not names uniquely"
+        if(len(matches)==0):
+           raise "derivative not available"
+        derivative = matches[0]
+
+        #does the calculated (sampled) gradient for the current derivative match the constraint description
+        descriptor = get_constraint_descriptor(derivative, local_dict.keys(), xs)
+        if(descriptor != constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
+            violated_constraints.append(constraint)
 
       return (len(violated_constraints) == 0, violated_constraints)
 
-    def determine_constraints(self, sample_size = 1_000_000):
+    def determine_constraints(self, sample_size = SAMPLE_SIZE):
 
-      f_primes = [(sympy.Derivative(self.equation.sympy_eq, var).doit(),var, var_display_name, 1) 
+      f_primes = [(sympy.Derivative(self.equation.sympy_eq, var).doit(),var.name, var_display_name, 1) 
                  for (var,var_display_name) 
                  in list(zip(self.equation.x, self.equation.get_var_names()))]
       
@@ -133,7 +169,7 @@ class SCRBenchmark(object):
                                                           patience = sample_size)
                 )
 
-          descriptor =  get_constraint_descriptor(self.equation, derivative,xs)
+          descriptor =  get_constraint_descriptor(derivative, self.equation.x, xs)
           print(f'> partial derivative over ({var_name}) with space {sampling_space} with constraint ({descriptor})')
           if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
             constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
