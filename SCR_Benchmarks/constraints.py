@@ -80,9 +80,17 @@ class SCRBenchmark(object):
 
     def determine_constraints(self, sample_size = 1_000_000):
 
-      f_prime = [(sympy.Derivative(self.equation.sympy_eq, var).doit(),var, var_display_name) 
+      f_primes = [(sympy.Derivative(self.equation.sympy_eq, var).doit(),var, var_display_name, 1) 
                  for (var,var_display_name) 
                  in list(zip(self.equation.x, self.equation.get_var_names()))]
+      
+      f_prime_mat = [[ (sympy.Derivative(f_prime, var).doit(), f'[{prime_var_name},{var}]', f'[{prime_var_display_name},{var_display_name}]', 2 ) 
+                        for (var,var_display_name)  
+                        in list(zip(self.equation.x, self.equation.get_var_names()))] 
+                     for (f_prime, prime_var_name, prime_var_display_name, _) 
+                     in f_primes]
+      f_prime_mat_flattened = [item for sublist in f_prime_mat for item in sublist]
+      derviatives = f_primes+f_prime_mat_flattened
 
       split_objectives = []
       constraints = []
@@ -112,10 +120,8 @@ class SCRBenchmark(object):
           split_objectives = positive_copy + negative_copy
           
       for split_objective in split_objectives:
-        for (derivative, var_name, var_display_name) in f_prime:
-
+        for (derivative, var_name, var_display_name, order_derivative) in derviatives:
           sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
-          print(f'> partial derivative over {var_name} with space {sampling_space}')
 
           sampling_objectives = [obj for (var, obj) in split_objective]
           xs = self.equation.get_inputs_from_dataset(
@@ -127,12 +133,12 @@ class SCRBenchmark(object):
                                                           patience = sample_size)
                 )
 
-
           descriptor =  get_constraint_descriptor(self.equation, derivative,xs)
+          print(f'> partial derivative over ({var_name}) with space {sampling_space} with constraint ({descriptor})')
           if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
             constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
               sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
-              sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:1,
+              sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:order_derivative,
               sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
               sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative),
               sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: sampling_space  })
