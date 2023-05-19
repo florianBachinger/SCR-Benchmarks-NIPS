@@ -11,6 +11,8 @@ __version__ = "0.2.0"
 from SCR_Benchmarks import SRSDFeynman
 from SCR_Benchmarks import Constants
 from SCR_Benchmarks import Info
+from SCR_Benchmarks.constraints import SCRBenchmark
+from SCR_Benchmarks.constraints import get_constraint_descriptor
 
 from .base import KnownEquation
 

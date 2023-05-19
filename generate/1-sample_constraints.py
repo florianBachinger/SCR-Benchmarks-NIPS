@@ -2,13 +2,11 @@ import json
 import numpy as np
 import sympy
 
-with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "w") as text_file:
-  text_file.write('SRSD_EQUATION_CONSTRAINTS = []')
-
 
 import SCR_Benchmarks.SRSDFeynman as srsdf
 import SCR_Benchmarks.Constants.StringKeys as sk
 import SCR_Benchmarks.base as base
+from SCR_Benchmarks import SCRBenchmark
 
 numpyShort = 'np'
 
@@ -27,23 +25,22 @@ dict = []
 
 i = 0
 
-def CalculateEquation(equation, text_file):
-  print(f"{equation.get_eq_name()}")
-  #generate uniform input space for range as specified in Feynman equations
-  print(f"> {equation.get_eq_raw()}")
+def CalculateEquation(equation_class, text_file):
+  print(f"{equation_class}")
+  
+  scr = SCRBenchmark(equation_class, initialize_datasets_on_creation=False)
 
-  constraints = equation.determine_constraints()
+  constraints = scr.determine_constraints()
 
-  text_file.write(str( {sk.EQUATION_EQUATION_NAME_KEY:equation.get_eq_name(),
+  text_file.write(str( {sk.EQUATION_EQUATION_NAME_KEY:scr.equation.get_eq_name(),
         sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY: constraints
           }))
   text_file.write(',')
 
 
-with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.py", "w") as text_file:
+with open("SCR_Benchmarks/Info/feynman_srsdf_constraint_info.json", "w") as text_file:
   text_file.write('SRSD_EQUATION_CONSTRAINTS = [')
   #iterate over all equations
   for dictEntry in srsdf.AllEquations:
-    equation = srsdf.AllEquations[dictEntry]()
-    CalculateEquation(equation, text_file)
+    CalculateEquation(srsdf.AllEquations[dictEntry], text_file)
   text_file.write(']')
