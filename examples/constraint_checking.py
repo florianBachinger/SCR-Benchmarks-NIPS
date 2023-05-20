@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import SCR_Benchmarks.SRSDFeynman as srsdf
-from SCR_Benchmarks.constraints import SCRBenchmark
+from SCR_Benchmarks import SCRBenchmark
 
 ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20)
 # Raw: exp(-(theta / sigma) ** 2 / 2) / (sqrt(2 * pi) * sigma)

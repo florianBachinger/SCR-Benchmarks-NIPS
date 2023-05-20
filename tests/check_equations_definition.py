@@ -36,7 +36,5 @@ for name in srsdf.AllEquations:
       raw = raw.replace(' ','')
       raw = raw.replace('ln','log')
       npFuncForm = npFuncForm.replace(' ','')
-      if(raw != npFuncForm) :
-        print(f"{name} do not match")
-        print(f"> {raw}")
-        print(f"> {npFuncForm}")
+
+      assert raw == npFuncForm

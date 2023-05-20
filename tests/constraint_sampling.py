@@ -7,6 +7,6 @@ from SCR_Benchmarks import SCRBenchmark
 import copy
 
 ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20)
+constraints =  ICh6Eq20.determine_constraints()
 
-for constraint in ICh6Eq20.determine_constraints(): 
-  print (f'> {constraint}')
+assert constraints == ICh6Eq20.get_constraints()

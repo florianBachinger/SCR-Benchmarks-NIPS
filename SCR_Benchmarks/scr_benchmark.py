@@ -3,6 +3,8 @@ import sympy
 import numpy as np
 import copy
 import SCR_Benchmarks.Constants.StringKeys as sk
+from SCR_Benchmarks.Info.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
+from scipy.spatial import ConvexHull
 
 SAMPLE_SIZE = 1_000_000
 
@@ -36,11 +38,44 @@ class SCRBenchmark(object):
         assert issubclass(equation ,base.KnownEquation)
 
         self.equation = equation()
-        self.constraints = self.equation.get_constraints()
+        self.constraints = self.get_constraints()
 
         if(initialize_datasets_on_creation):
           self.datasets = self.initialize_datasets_for_constraint_checking()
-        
+
+    def create_dataset(self,sample_size,patience = 10, train_test_split = 0.8):
+        assert (0<=train_test_split and train_test_split<=1), f'Train-test-split must be in [0,1]'
+
+        xs = self.equation.create_dataset(sample_size,patience)
+        test = []
+
+        training_length = int(train_test_split*len(xs))
+        test_length = int(train_test_split*len(xs))
+        while len(xs) > training_length and len(test) < test_length:
+          hullSet = xs[:,:-1]
+          hull = ConvexHull(hullSet)
+          hullIdx = hull.vertices
+          hullPts = hullSet[hullIdx, :]
+          if len(test) < test_length:
+              if len(test) == 0:
+                  test = xs[hullIdx, :]
+              else:
+                  test = np.append(test, xs[hullIdx, :], 0)
+
+          xs = np.delete(xs, hullIdx, 0)
+        train = xs
+        return (train, test)
+    
+    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8):
+       (train, test) = self.create_dataset(sample_size,patience, train_test_split)
+       train_df = self.equation.to_dataframe(train)
+       test_df = self.equation.to_dataframe(test)
+       return (train_df,test_df)
+
+    def get_constraints (self):
+      if(self.equation.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
+          return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.equation.get_eq_name())
+          
     def initialize_datasets_for_constraint_checking(self):
       constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
       self.datasets = {}
@@ -154,7 +189,8 @@ class SCRBenchmark(object):
               if(var == var_name):
                 obj.uses_positive = False
           split_objectives = positive_copy + negative_copy
-          
+
+      constraint_id = 1 
       for split_objective in split_objectives:
         for (derivative, var_name, var_display_name, order_derivative) in derviatives:
           sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
@@ -177,5 +213,7 @@ class SCRBenchmark(object):
               sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:order_derivative,
               sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
               sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative),
-              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: sampling_space  })
+              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: sampling_space,
+              sk.EQUATION_CONSTRAINTS_ID_KEY: constraint_id  })
+            constraint_id = constraint_id + 1
       return constraints

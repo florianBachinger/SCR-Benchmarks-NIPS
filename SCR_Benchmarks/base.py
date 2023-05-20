@@ -20,7 +20,6 @@ from sympy.utilities.misc import func_name
 import SCR_Benchmarks.Constants.StringKeys as sk
 
 from SCR_Benchmarks.Info.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
-from SCR_Benchmarks.Info.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
 
 
 FLOAT32_MAX = np.finfo(np.float32).max
@@ -49,7 +48,7 @@ def create_dataset_from_sampling_objectives(sampling_objs, sympy_eq,eq_func,chec
     valid_y = y[valid_sample_flags]
     missed_sample_size = sample_size - valid_sample_size
     for i in range(patience):
-        print(f'patience {i}/{patience} remaining size {missed_sample_size}')
+        # print(f'patience {i}/{patience} remaining size {missed_sample_size}')
         xs = [sampling_func(missed_sample_size * 5) for sampling_func in sampling_objs]
         y = eq_func(xs)
         valid_sample_flags = check_if_valid(y)
@@ -180,9 +179,7 @@ class KnownEquation(object):
         return ds
     
     def to_dataframe(self, data):
-        columns = self.get_var_names()
-        columns.append(self.get_output_name())
-        return pd.DataFrame(data, columns= columns)
+        return pd.DataFrame(data, columns= self.get_var_names() + [self.get_output_name()])
     
     def create_dataframe(self, sample_size, patience=10 ):
         data = self.create_dataset(sample_size, patience)
@@ -217,7 +214,7 @@ class KnownEquation(object):
     
     def get_var_names (self):
       if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
-          return SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY]
+          return list(SRSDConfig[self.get_eq_name()][sk.EQUATION_CONFIG_DICT_VARIABLE_KEY])
       raise "no equation source specified, or equation is not supported"
     
     def get_output_name (self):
@@ -226,12 +223,7 @@ class KnownEquation(object):
       raise "no equation source specified, or equation is not supported"
     
 
-    def get_constraints (self):
-      if(self.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
-          return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.get_eq_name())
-          
-    
-    
+
           
 
 
