@@ -77,6 +77,9 @@ class KnownEquation(object):
         self.x = [Symbol(f'x{i}', **kwargs) for i, kwargs in enumerate(kwargs_list)]
         self.sympy_eq = None
 
+    def calculate(self,xs):
+        return self.eq_func(xs)
+
     def get_eq_name(self, prefix=None, suffix=None):
         if prefix is None:
             prefix = ''

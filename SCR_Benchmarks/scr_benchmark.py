@@ -43,12 +43,17 @@ class SCRBenchmark(object):
         if(initialize_datasets_on_creation):
           self.datasets = self.initialize_datasets_for_constraint_checking()
 
-    def create_dataset(self,sample_size,patience = 10, train_test_split = 0.8):
-        assert (0<=train_test_split and train_test_split<=1), f'Train-test-split must be in [0,1]'
+    def create_dataset(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0 ):
+        assert (0<=train_test_split and train_test_split<=1), f'train_test_split must be in [0,1]'
+        assert (0<=noise_level and noise_level<=1), f'noise_level must be in [0,1]'
 
         xs = self.equation.create_dataset(sample_size,patience)
-        test = []
 
+        if(noise_level>0):
+          std_dev = np.std(xs[:,-1])
+          xs[:,-1] = xs[:,-1] + np.random.normal(0,std_dev*np.sqrt(noise_level),len(xs))
+
+        test = [] # resulting array for test data of train-test-split
         training_length = int(train_test_split*len(xs))
         test_length = int(train_test_split*len(xs))
         while len(xs) > training_length and len(test) < test_length:
@@ -66,8 +71,8 @@ class SCRBenchmark(object):
         train = xs
         return (train, test)
     
-    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8):
-       (train, test) = self.create_dataset(sample_size,patience, train_test_split)
+    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0 ):
+       (train, test) = self.create_dataset(sample_size,patience, train_test_split,noise_level)
        train_df = self.equation.to_dataframe(train)
        test_df = self.equation.to_dataframe(test)
        return (train_df,test_df)
