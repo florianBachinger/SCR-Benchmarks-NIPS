@@ -1,34 +1,11 @@
 import SCR_Benchmarks.base as base
 import sympy
 import numpy as np
+import pandas as pd
 import copy
 import SCR_Benchmarks.Constants.StringKeys as sk
-from SCR_Benchmarks.Info.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
-from scipy.spatial import ConvexHull
+from SCR_Benchmarks.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
 
-SAMPLE_SIZE = 1_000_000
-
-def get_constraint_descriptor( eq, local_dict, xs):
-    f = sympy.lambdify(local_dict, eq,"numpy")
-    #calculate gradient per data point
-    # gradients = np.array([ f(*row) for row in xs ])
-    # speedup of 5:
-    f_v = np.vectorize(f)
-    gradients = f_v(*(xs.T))
-
-    unique_gradient_signs = set(np.unique(np.sign(gradients)))
-
-    if((unique_gradient_signs ==  set([-1])) or (unique_gradient_signs ==  set([-1, 0]))):
-      descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_DECREASING_CONSTRAINT
-    elif ((unique_gradient_signs ==  set([1])) or (unique_gradient_signs ==  set([0, 1]))):
-        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_INCREASING_CONSTRAINT
-    elif ((unique_gradient_signs ==  set([-1, 1])) or (unique_gradient_signs ==  set([-1, 0, 1]))):
-        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT
-    elif (unique_gradient_signs ==  set([0])):
-        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_CONSTANT_CONSTRAINT
-    else:
-      raise "Unforseen sign values!"
-    return descriptor
 
 class SCRBenchmark(object):
     _eq_name = None
@@ -43,8 +20,10 @@ class SCRBenchmark(object):
         if(initialize_datasets_on_creation):
           self.datasets = self.initialize_datasets_for_constraint_checking()
 
-    def create_dataset(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0 ):
-        assert (0<=train_test_split and train_test_split<=1), f'train_test_split must be in [0,1]'
+    def read_test_dataset(self):
+        return pd.read_csv(f'./SCR_Benchmarks/Data/Test/{self.equation.get_eq_name()}.csv')
+    
+    def create_dataset(self,sample_size,patience = 10, noise_level = 0 ):
         assert (0<=noise_level and noise_level<=1), f'noise_level must be in [0,1]'
 
         xs = self.equation.create_dataset(sample_size,patience)
@@ -53,46 +32,18 @@ class SCRBenchmark(object):
           std_dev = np.std(xs[:,-1])
           xs[:,-1] = xs[:,-1] + np.random.normal(0,std_dev*np.sqrt(noise_level),len(xs))
 
-        test = [] # resulting array for test data of train-test-split
-        training_length = int(train_test_split*len(xs))
-        test_length = int(train_test_split*len(xs))
-        while len(xs) > training_length and len(test) < test_length:
-          hullSet = xs[:,:-1]
-          hull = ConvexHull(hullSet)
-          hullIdx = hull.vertices
-          hullPts = hullSet[hullIdx, :]
-          if len(test) < test_length:
-              if len(test) == 0:
-                  test = xs[hullIdx, :]
-              else:
-                  test = np.append(test, xs[hullIdx, :], 0)
-
-          xs = np.delete(xs, hullIdx, 0)
-        train = xs
-        return (train, test)
+        return (xs, self.read_test_dataset())
     
-    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0 ):
+    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0,use_display_name = False ):
        (train, test) = self.create_dataset(sample_size,patience, train_test_split,noise_level)
-       train_df = self.equation.to_dataframe(train)
-       test_df = self.equation.to_dataframe(test)
+       train_df = self.equation.to_dataframe(train,use_display_name = False)
+       test_df = self.equation.to_dataframe(test,use_display_name = False)
        return (train_df,test_df)
 
     def get_constraints (self):
       if(self.equation.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.equation.get_eq_name())
           
-    def initialize_datasets_for_constraint_checking(self):
-      constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
-      self.datasets = {}
-      if(len(constraints) == 0):
-          raise Warning( f"equation {self.equation._eq_name} has to constraints to be checked. all checks will return true.")
-      for constraint in constraints:
-         self.datasets[constraint[sk.EQUATION_CONSTRAINTS_ID_KEY]] = np.random.uniform(
-              [low for (low, _) in [ eval(var_range) for var_range in constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY].values()]],
-              [high for (_, high) in [ eval(var_range) for var_range in constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY].values()]],
-              (SAMPLE_SIZE,self.equation.get_var_count())
-            )
-
     def check_constraints (self, equation_candidate, use_display_names = False):
       constraints = self.equation.get_constraints()
 
@@ -148,77 +99,8 @@ class SCRBenchmark(object):
         derivative = matches[0]
 
         #does the calculated (sampled) gradient for the current derivative match the constraint description
-        descriptor = get_constraint_descriptor(derivative, local_dict.keys(), xs)
+        descriptor = base.get_constraint_descriptor(derivative, local_dict.keys(), xs)
         if(descriptor != constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
             violated_constraints.append(constraint)
 
       return (len(violated_constraints) == 0, violated_constraints)
-
-    def determine_constraints(self, sample_size = SAMPLE_SIZE):
-
-      f_primes = [(sympy.Derivative(self.equation.sympy_eq, var).doit(),var.name, var_display_name, 1) 
-                 for (var,var_display_name) 
-                 in list(zip(self.equation.x, self.equation.get_var_names()))]
-      
-      f_prime_mat = [[ (sympy.Derivative(f_prime, var).doit(), f'[{prime_var_name},{var}]', f'[{prime_var_display_name},{var_display_name}]', 2 ) 
-                        for (var,var_display_name)  
-                        in list(zip(self.equation.x, self.equation.get_var_names()))] 
-                     for (f_prime, prime_var_name, prime_var_display_name, _) 
-                     in f_primes]
-      f_prime_mat_flattened = [item for sublist in f_prime_mat for item in sublist]
-      derviatives = f_primes+f_prime_mat_flattened
-
-      split_objectives = []
-      constraints = []
-
-      objectives= list(
-         zip(
-          self.equation.x,
-          [obj.to_uniform_sampling() for obj in self.equation.sampling_objs]
-         ))
-
-      split_objectives.append(objectives)
-
-      for (var_name,objective ) in objectives:
-
-        if(objective.uses_positive and objective.uses_negative):
-          positive_copy = copy.deepcopy(split_objectives)
-          negative_copy = copy.deepcopy(split_objectives)
-          
-          for objs in positive_copy:
-            for (var, obj) in objs:
-              if(var == var_name):
-                obj.uses_negative = False
-          for objs in negative_copy:
-            for (var, obj) in objs:
-              if(var == var_name):
-                obj.uses_positive = False
-          split_objectives = positive_copy + negative_copy
-
-      constraint_id = 1 
-      for split_objective in split_objectives:
-        for (derivative, var_name, var_display_name, order_derivative) in derviatives:
-          sampling_space = { var.name: str(obj.get_value_range()) for (var, obj) in split_objective}
-
-          sampling_objectives = [obj for (var, obj) in split_objective]
-          xs = self.equation.get_inputs_from_dataset(
-                  base.create_dataset_from_sampling_objectives(sampling_objectives, 
-                                                          self.equation.sympy_eq, 
-                                                          self.equation.eq_func, 
-                                                          self.equation.check_if_valid, 
-                                                          sample_size,
-                                                          patience = sample_size)
-                )
-
-          descriptor =  get_constraint_descriptor(derivative, self.equation.x, xs)
-          print(f'> partial derivative over ({var_name}) with space {sampling_space} with constraint ({descriptor})')
-          if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
-            constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY:str(var_name),
-              sk.EQUATION_CONSTRAINTS_VAR_DISPLAY_NAME_KEY:var_display_name,
-              sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY:order_derivative,
-              sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY: descriptor,
-              sk.EQUATION_CONSTRAINTS_DERIVATIVE_KEY: str(derivative),
-              sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY: sampling_space,
-              sk.EQUATION_CONSTRAINTS_ID_KEY: constraint_id  })
-            constraint_id = constraint_id + 1
-      return constraints

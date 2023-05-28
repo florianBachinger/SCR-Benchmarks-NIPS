@@ -19,7 +19,7 @@ from sympy import Derivative, Matrix, Symbol, simplify, solve, lambdify
 from sympy.utilities.misc import func_name
 import SCR_Benchmarks.Constants.StringKeys as sk
 
-from SCR_Benchmarks.Info.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
+from SCR_Benchmarks.Data.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
 
 
 FLOAT32_MAX = np.finfo(np.float32).max
@@ -61,6 +61,29 @@ def create_dataset_from_sampling_objectives(sampling_objs, sympy_eq,eq_func,chec
             return np.array([*xs, y]).T
     raise TimeoutError(f'number of valid samples (`{len(valid_y)}`) did not reach to '
                         f'{sample_size} within {patience} trials')
+
+
+def get_constraint_descriptor( eq, local_dict, xs):
+    f = sympy.lambdify(local_dict, eq,"numpy")
+    #calculate gradient per data point
+    # gradients = np.array([ f(*row) for row in xs ])
+    # speedup of 5:
+    f_v = np.vectorize(f)
+    gradients = f_v(*(xs.T))
+
+    unique_gradient_signs = set(np.unique(np.sign(gradients)))
+
+    if((unique_gradient_signs ==  set([-1])) or (unique_gradient_signs ==  set([-1, 0]))):
+      descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_DECREASING_CONSTRAINT
+    elif ((unique_gradient_signs ==  set([1])) or (unique_gradient_signs ==  set([0, 1]))):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_INCREASING_CONSTRAINT
+    elif ((unique_gradient_signs ==  set([-1, 1])) or (unique_gradient_signs ==  set([-1, 0, 1]))):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT
+    elif (unique_gradient_signs ==  set([0])):
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_CONSTANT_CONSTRAINT
+    else:
+      raise "Unforseen sign values!"
+    return descriptor
 
 
 class KnownEquation(object):
@@ -116,6 +139,14 @@ class KnownEquation(object):
             elif sub_max_value > max_value:
                 max_value = sub_max_value
         return np.abs(np.log10(np.abs(max_value - min_value)))
+
+    def get_domain_ranges(self):
+        return [{"name":var.name, 
+                "low":sampling_objs.get_value_range()[0],
+                "high":sampling_objs.get_value_range()[1]}
+                
+                for (var,sampling_objs) 
+                in zip(self.get_vars(), self.sampling_objs) ]
 
     def eq_func(self, x):
         raise NotImplementedError()
@@ -181,13 +212,15 @@ class KnownEquation(object):
         ds.eq_func = lambda x: eq_func(*x).T
         return ds
     
-    def to_dataframe(self, data):
-        return pd.DataFrame(data, columns= self.get_var_names() + [self.get_output_name()])
+    def to_dataframe(self, data,use_display_name = False):
+        if(use_display_name):
+          return pd.DataFrame(data, columns= self.get_var_names() + [self.get_output_name()])
+        else:
+          return pd.DataFrame(data, columns= self.get_vars() + [self.get_output_name()])
     
     def create_dataframe(self, sample_size, patience=10 ):
         data = self.create_dataset(sample_size, patience)
         return self.to_dataframe(data)
-    
     
     def create_input_dataset (self, sample_size, patience=10):
       dataset = self.create_dataset(sample_size, patience)
