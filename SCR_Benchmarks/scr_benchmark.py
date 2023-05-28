@@ -3,27 +3,42 @@ import sympy
 import numpy as np
 import pandas as pd
 import copy
+import os
 import SCR_Benchmarks.Constants.StringKeys as sk
 from SCR_Benchmarks.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
-
+CONSTRAINT_SAMPLING_SIZE = 1_000_000
 
 class SCRBenchmark(object):
     _eq_name = None
+    
 
-    def __init__(self, equation, initialize_datasets_on_creation = True):
+    def __init__(self, equation, initialize_constraint_checking_datasets = True):
         super().__init__()
         assert issubclass(equation ,base.KnownEquation)
 
         self.equation = equation()
         self.constraints = self.get_constraints()
+        self.datasets = None
+        if(initialize_constraint_checking_datasets):
+          self.read_datasets_for_constraint_checking()
 
-        if(initialize_datasets_on_creation):
-          self.datasets = self.initialize_datasets_for_constraint_checking()
+    def read_datasets_for_constraint_checking(self):
+      constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
+      if(len(constraints) == 0):
+          raise Warning( f"equation {self.equation._eq_name} has to have constraints to be checked. all checks will return true.")
+      self.datasets = {}
+      for constraint in constraints:
+          sample_space = constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY]
+          lows = [ space['low'] for space in sample_space]
+          highs = [ space['high'] for space in sample_space]
 
-    def read_test_dataset(self):
-        return pd.read_csv(f'./SCR_Benchmarks/Data/Test/{self.equation.get_eq_name()}.csv')
+          self.datasets[constraint[sk.EQUATION_CONSTRAINTS_ID_KEY]] = np.random.uniform(lows,highs,(CONSTRAINT_SAMPLING_SIZE,self.equation.get_var_count()))
+
+    def read_test_dataframe(self):
+        file = os.path.join(os.path.dirname(__file__),f'Data/Test/{self.equation.get_eq_name()}.csv')
+        return pd.read_csv(file)
     
-    def create_dataset(self,sample_size,patience = 10, noise_level = 0 ):
+    def create_dataset(self, sample_size, patience = 10, noise_level = 0 ):
         assert (0<=noise_level and noise_level<=1), f'noise_level must be in [0,1]'
 
         xs = self.equation.create_dataset(sample_size,patience)
@@ -32,12 +47,12 @@ class SCRBenchmark(object):
           std_dev = np.std(xs[:,-1])
           xs[:,-1] = xs[:,-1] + np.random.normal(0,std_dev*np.sqrt(noise_level),len(xs))
 
-        return (xs, self.read_test_dataset())
+        return (xs, self.read_test_dataframe().to_numpy())
     
     def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0,use_display_name = False ):
-       (train, test) = self.create_dataset(sample_size,patience, train_test_split,noise_level)
-       train_df = self.equation.to_dataframe(train,use_display_name = False)
-       test_df = self.equation.to_dataframe(test,use_display_name = False)
+       (train, test) = self.create_dataset(sample_size,patience,noise_level)
+       train_df = self.equation.to_dataframe(train,use_display_name)
+       test_df = self.equation.to_dataframe(test,use_display_name)
        return (train_df,test_df)
 
     def get_constraints (self):
@@ -45,14 +60,14 @@ class SCRBenchmark(object):
           return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.equation.get_eq_name())
           
     def check_constraints (self, equation_candidate, use_display_names = False):
-      constraints = self.equation.get_constraints()
+      constraints = self.get_constraints()
 
       constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
       if(len(constraints) == 0):
           return True #no constraints to check
       
       if(self.datasets is None):
-          self.initialize_datasets_for_constraint_checking()
+          self.read_datasets_for_constraint_checking()
 
       # replace the sympy local dictionary with the display names of variables if specified
       local_dict = self.equation.get_sympy_eq_local_dict()

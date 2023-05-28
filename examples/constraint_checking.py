@@ -26,6 +26,7 @@ print(ICh6Eq20.check_constraints("-x0"))
 #prints false as both constraints for x0 (theta) are violated
 print(ICh6Eq20.check_constraints("(x0*x0)"))
 
+ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20, initialize_constraint_checking_datasets = False)
 ########################################################################
 # test the same function, expect the same outputs, but use display names
 ########################################################################
