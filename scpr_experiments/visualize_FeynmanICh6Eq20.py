@@ -1,8 +1,5 @@
-from SCR_Benchmarks.suite import FEYNMAN_SRSD_HARD,HARD_TRAIN_TEST_SPLIT,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZE
-from SCR_Benchmarks.suite import SCRBenchmarkSuite
 import numpy as np
 import matplotlib.pyplot as plt
-import glob
 import os
 import pandas as pd
 
@@ -10,8 +7,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import SCR_Benchmarks.SRSDFeynman as srsdf
-from SCR_Benchmarks import SCRBenchmark
 
 from scipy.interpolate import griddata
 import matplotlib.cm as cm
@@ -34,25 +29,28 @@ def PlotContour(training, test, target, axis, norm, cmap):
 
   
   axis.contourf(grid_x, grid_y, grid_z0, cmap= cmap , norm= norm)
-  sns.scatterplot(ax = axis, x=training['x1'], y=training['x0'], c = 'g', s = 8,  marker='x')
-  sns.scatterplot(ax = axis, x=test['x1'], y=test['x0'], c = 'b', s = 8,  marker='x')
+  # sns.scatterplot(ax = axis, x=training['x1'], y=training['x0'], c = 'g', s = 8,  marker='x')
+  # sns.scatterplot(ax = axis, x=test['x1'], y=test['x0'], c = 'b', s = 8,  marker='x')
   #only print a subset of the space sigma x theta \in [0.1,10]x[-10,10]
   #to increase the resolution of the interesting interaction
   # axis.set_xlim([0.1,0.5])
   # axis.set_ylim([-0.6,0.6])
   
 plt.close()
-
-summary = pd.read_csv('./results/summary.csv')
+folder= f'./scpr_experiments/visualization/FeynmanICh6Eq20/'
+if not os.path.exists(folder):
+          os.makedirs(folder)
+summary = pd.read_csv('./scpr_experiments/results/summary.csv')
 summary = summary[summary['EquationName'] == 'FeynmanICh6Eq20']
 summary = summary[summary['Successful'] == True]
 summary = summary.sort_values(['RMSE_Test'], ascending=True)
+summary = summary.head(3)
 for (index,row) in summary.iterrows():
     print(row)
     data = pd.read_csv(row['DataTargetFile'])
     training = data[data['split'] == 'training']
     test = data[data['split'] == 'test']
-    fig, ax = plt.subplots(1,2, figsize=(3,3),  sharey=True)
+    fig, ax = plt.subplots(1,2, figsize=(16,8),  sharey=True)
 
     norm = Normalize( vmin=np.min([data['f'],data['Predicted']]), vmax=np.max([data['f'],data['Predicted']]))
     cmap = cm.get_cmap('coolwarm')
@@ -63,6 +61,6 @@ for (index,row) in summary.iterrows():
     PlotContour(training, test,'f', ax[0], norm, cmap)
     PlotContour(training, test,'Predicted', ax[1], norm, cmap)
 
-    plt.show()
-    plt.close()
+    plt.savefig(f'{folder}{row["RMSE_Test"]}_{index}.png')
     plt.clf()
+    plt.close()

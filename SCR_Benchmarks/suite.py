@@ -79,7 +79,7 @@ class SCRBenchmarkSuite(object):
         os.makedirs(target_folder)
       for equation_name in Equations:
         print(equation_name)
-        benchmark = SCRBenchmark(AllEquations[equation_name],initialize_datasets_on_creation=False)
+        benchmark = SCRBenchmark(AllEquations[equation_name],initialize_constraint_checking_datasets=False)
         equation_folder = f'{target_folder}/{equation_name}'
 
         if not os.path.exists(equation_folder):

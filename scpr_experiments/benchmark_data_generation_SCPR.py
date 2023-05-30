@@ -1,8 +1,9 @@
-from SCR_Benchmarks.suite import FEYNMAN_SRSD_HARD,HARD_TRAIN_TEST_SPLIT,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZE
+from SCR_Benchmarks.suite import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
 from SCR_Benchmarks.suite import SCRBenchmarkSuite
 import json
+import numpy as np
 
-target_folder = './data'
+target_folder = './scpr_experiments/data'
 
 Degrees = [1,2,3,4,5,6,7]
 Lambdas = [10**-7,10**-6,10**-5,10**-4,10**-3,10**-2,10**-1,1,10]
@@ -14,9 +15,8 @@ print('generating instances')
 # each equation folder contains the info file as json
 # and the data files for each configuration as csv
 SCRBenchmarkSuite.create_hard_instances(target_folder = target_folder,
-                                        Equations=FEYNMAN_SRSD_HARD,
-                                        sample_size=HARD_SAMPLE_SIZE,
-                                        train_test_splits=HARD_TRAIN_TEST_SPLIT,
+                                        Equations= FEYNMAN_SRSD_HARD,
+                                        sample_sizes=HARD_SAMPLE_SIZES,
                                         noise_levels=HARD_NOISE_LEVELS)
 
 # for shape-constrained polynomial regression we add
@@ -32,18 +32,20 @@ for equation_name in FEYNMAN_SRSD_HARD:
     data['Lambdas']= Lambdas
     data['Alphas']= Alphas
     data['MaxInteractions']= MaxInteractions
-    constraints  = []
-    for constraint in data['Constraints']:
-      sample_space = []
-      for var in constraint['sample_space']:
-        space = eval(constraint['sample_space'][var])
-        sample_space.append({
-          "name" : var,
-          "low" : space[0],
-          "high": space[1]
-        })
-      constraint['sample_space'] = sample_space
 
+    supportedConstraints = []
+    for constraint in data['Constraints']:
+      if constraint['order_derivative'] == 2:
+        variables = np.unique(constraint['var_name'])
+        variables_display = np.unique(constraint['var_display_name'])
+        if(len(variables) == 1):
+          constraint['var_name'] = variables[0]
+          constraint['var_display_name'] = variables_display[0]
+          supportedConstraints.append(constraint)
+      else: 
+        supportedConstraints.append(constraint)
+    data['Constraints'] = supportedConstraints
+    
     f.seek(0)
     f.write(str(data).replace('\'',"\""))
     f.truncate()
