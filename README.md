@@ -3,13 +3,12 @@ This repository serves as a benchmark suite for shape-constrained regression alg
 
 Our benchmark suite builds upon [established benchmarks for symbolic regression](#credit) and extends them in functionality. We provide python code used to generate benchmark data for experiments, a set of test datasets for ease of result comparison, and the ability to check if a function adheres to the specified constraints.
 
-# Usage
+## Usage
 
-See our `examples` folder for more code snippets and usage examples. 
-This summary highlights the key features.
+See our `examples` folder for **more code snippets and usage examples**. There we detail the [data sampling](/examples/generate_data.ipynb) methodology and show how to use our [constraint checking](examples/checking_constraints.ipynb) interface. This readme only highlights the key features.
 
 
-## Generate Benchmark Data
+### Generate Benchmark Data
 
 ```python
 from SCRBenchmark import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
@@ -24,7 +23,7 @@ BenchmarkSuite.create_hard_instances(target_folder = './data',
                                         noise_levels=HARD_NOISE_LEVELS)
 ```
 
-## Generate Benchmark Data for individual equations
+### Generate Benchmark Data for individual equations
 
 ```python
 import SCRBenchmark.SRSDFeynman as srsdf
@@ -34,7 +33,7 @@ ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20)
 (training, test) = ICh6Eq20.create_dataset(sample_size=1000, patience= 10, noise_level = 0)
 ```
 
-## Check if functions adhere to constraints
+### Check if functions adhere to constraints
 ```python
 import SCRBenchmark.SRSDFeynman as srsdf
 from SCRBenchmark import Benchmark
@@ -90,16 +89,16 @@ Then import the package:
 import SCRBenchmark
 ```
 
-# References
+## References
 
-## Citations
+### Citations
 Cite this work:
 
 ```bibtex
 will be added in future
 ```
 
-## Credit
+### Credit
 We enhance the work of Matsubara et al. by determining the _shape constraints_ that describe the expected function shapes of the benchmark formulas. This knowledge can be used to enforce the behavior of trained prediction models and to e.g., improve extrapolation behavior.
 
 
