@@ -9,7 +9,7 @@ See our `examples` folder for **more code snippets and usage examples**. There w
 
 
 ### Generate Benchmark Data
-
+Go [here](/examples/generate_data.ipynb) for more examples.
 ```python
 from SCRBenchmark import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
 from SCRBenchmark import BenchmarkSuite
@@ -24,7 +24,7 @@ BenchmarkSuite.create_hard_instances(target_folder = './data',
 ```
 
 ### Generate Benchmark Data for individual equations
-
+Go [here](/examples/generate_data.ipynb) for more examples.
 ```python
 import SCRBenchmark.SRSDFeynman as srsdf
 from SCRBenchmark import Benchmark
@@ -34,6 +34,7 @@ ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20)
 ```
 
 ### Check if functions adhere to constraints
+Go [here](examples/checking_constraints.ipynb) for more detail.
 ```python
 import SCRBenchmark.SRSDFeynman as srsdf
 from SCRBenchmark import Benchmark
@@ -58,9 +59,6 @@ print(ICh6Eq20.check_constraints("(theta*theta)",use_display_names=True))
 
 ## Installation 
 
-### Requirements.
-
-Python >=3.6
 ### pip install
 
 If the python package is hosted on a repository, you can install directly using:

@@ -36,17 +36,18 @@ def PlotContour(training, test, target, axis, norm, cmap):
   # axis.set_ylim([-0.6,0.6])
   
 plt.close()
-folder= f'./experiments/visualization/FeynmanICh6Eq20/'
+folder= f'./experiments/results/visualization/FeynmanICh6Eq20/'
 if not os.path.exists(folder):
           os.makedirs(folder)
 summary = pd.read_csv('./experiments/results/summary.csv')
+print(summary.groupby('EquationName').count())
 summary = summary[summary['EquationName'] == 'FeynmanICh6Eq20']
 summary = summary[summary['Successful'] == True]
 summary = summary.sort_values(['RMSE_Test'], ascending=True)
 summary = summary.head(3)
 for (index,row) in summary.iterrows():
     print(row)
-    data = pd.read_csv(row['DataTargetFile'])
+    data = pd.read_csv(row['DataSourceFile'])
     training = data[data['split'] == 'training']
     test = data[data['split'] == 'test']
     fig, ax = plt.subplots(1,2, figsize=(16,8),  sharey=True)
@@ -58,6 +59,10 @@ for (index,row) in summary.iterrows():
     # --------------------- plot benchmark instance WITHOUT noise ---------------------
     # ---------------------------------------------------------------------------------
     PlotContour(training, test,'f', ax[0], norm, cmap)
+
+    eq = eval(f"lambda x0: {row['EquationString'].replace(',','.')}")
+    training['Predicted'] = eq(training['x0'])
+    test['Predicted'] = eq(test['x0'])
     PlotContour(training, test,'Predicted', ax[1], norm, cmap)
 
     plt.savefig(f'{folder}{row["RMSE_Test"]}_{index}.png')
