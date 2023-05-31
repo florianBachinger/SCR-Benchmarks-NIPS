@@ -1,20 +1,17 @@
-import json
-import numpy as np
 import sympy
 import copy
 
-
-import SCR_Benchmarks.SRSDFeynman as srsdf
-import SCR_Benchmarks.Constants.StringKeys as sk
-import SCR_Benchmarks.base as base
-from SCR_Benchmarks import SCRBenchmark
+import SCRBenchmark.SRSDFeynman as srsdf
+import SCRBenchmark.Constants.StringKeys as sk
+from SCRBenchmark import create_dataset_from_sampling_objectives, get_constraint_descriptor
+from SCRBenchmark import Benchmark
 
 CONSTRAINT_SAMPLING_SIZE = 1_000_000
 
 def CalculateEquation(equation_class, text_file):
   print(f"{equation_class}")
   
-  scr = SCRBenchmark(equation_class, initialize_datasets_on_creation=False)
+  scr = Benchmark(equation_class, initialize_constraint_checking_datasets=False)
 
   f_primes = [(sympy.Derivative(scr.equation.sympy_eq, var).doit(),var.name, var_display_name, 1) 
                  for (var,var_display_name) 
@@ -64,7 +61,7 @@ def CalculateEquation(equation_class, text_file):
 
       sampling_objectives = [obj for (var, obj) in split_objective]
       xs = scr.equation.get_inputs_from_dataset(
-              base.create_dataset_from_sampling_objectives(sampling_objectives, 
+              create_dataset_from_sampling_objectives(sampling_objectives, 
                                                       scr.equation.sympy_eq, 
                                                       scr.equation.eq_func, 
                                                       scr.equation.check_if_valid, 
@@ -72,7 +69,7 @@ def CalculateEquation(equation_class, text_file):
                                                       patience = CONSTRAINT_SAMPLING_SIZE)
             )
 
-      descriptor =  base.get_constraint_descriptor(derivative, scr.equation.x, xs)
+      descriptor =  get_constraint_descriptor(derivative, scr.equation.x, xs)
       print(f'> partial derivative over ({var_name}) with space {sampling_space} with constraint ({descriptor})')
       if(descriptor != sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT):
         constraints.append({sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY: var_name,
@@ -90,7 +87,7 @@ def CalculateEquation(equation_class, text_file):
   text_file.write(',')
 
 
-with open("SCR_Benchmarks/Data/feynman_srsdf_constraint_info.json", "w") as text_file:
+with open("SCRBenchmark/Data/feynman_srsdf_constraint_info.json", "w") as text_file:
   text_file.write('SRSD_EQUATION_CONSTRAINTS = [')
   #iterate over all equations
   for dictEntry in srsdf.AllEquations:

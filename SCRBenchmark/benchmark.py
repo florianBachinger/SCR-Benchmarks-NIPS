@@ -1,14 +1,13 @@
-import SCR_Benchmarks.base as base
+import SCRBenchmark.base as base
 import sympy
 import numpy as np
 import pandas as pd
-import copy
 import os
-import SCR_Benchmarks.Constants.StringKeys as sk
-from SCR_Benchmarks.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
+import SCRBenchmark.Constants.StringKeys as sk
+from SCRBenchmark.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
 CONSTRAINT_SAMPLING_SIZE = 1_000_000
 
-class SCRBenchmark(object):
+class Benchmark(object):
     _eq_name = None
     
 

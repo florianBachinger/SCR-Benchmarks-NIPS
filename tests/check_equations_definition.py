@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import inspect 
-import SCR_Benchmarks.SRSDFeynman as srsdf
+import SCRBenchmark.SRSDFeynman as srsdf
 
 def formatEquation(equation, function):
       for (index, name) in zip(range(0,len(equation.get_var_names())), equation.get_var_names()):

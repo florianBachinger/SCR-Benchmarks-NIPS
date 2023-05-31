@@ -5,7 +5,6 @@ import pandas as pd
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 from scipy.interpolate import griddata
@@ -37,10 +36,10 @@ def PlotContour(training, test, target, axis, norm, cmap):
   # axis.set_ylim([-0.6,0.6])
   
 plt.close()
-folder= f'./scpr_experiments/visualization/FeynmanICh6Eq20/'
+folder= f'./experiments/visualization/FeynmanICh6Eq20/'
 if not os.path.exists(folder):
           os.makedirs(folder)
-summary = pd.read_csv('./scpr_experiments/results/summary.csv')
+summary = pd.read_csv('./experiments/results/summary.csv')
 summary = summary[summary['EquationName'] == 'FeynmanICh6Eq20']
 summary = summary[summary['Successful'] == True]
 summary = summary.sort_values(['RMSE_Test'], ascending=True)

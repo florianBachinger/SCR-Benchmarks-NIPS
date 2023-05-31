@@ -1,11 +1,7 @@
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import SCR_Benchmarks.SRSDFeynman as srsdf
-from SCR_Benchmarks import SCRBenchmark
+import SCRBenchmark.SRSDFeynman as srsdf
+from SCRBenchmark import Benchmark
 
-ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20)
+ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20)
 # Raw: exp(-(theta / sigma) ** 2 / 2) / (sqrt(2 * pi) * sigma)
 # is monotonic increasing over theta in -inf. <= theta <= 0
 # is monotonic decreasing over theta in 0 <= theta <= inf.
@@ -26,7 +22,7 @@ print(ICh6Eq20.check_constraints("-x0"))
 #prints false as both constraints for x0 (theta) are violated
 print(ICh6Eq20.check_constraints("(x0*x0)"))
 
-ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20, initialize_constraint_checking_datasets = False)
+ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20, initialize_constraint_checking_datasets = False)
 ########################################################################
 # test the same function, expect the same outputs, but use display names
 ########################################################################

@@ -1,11 +1,8 @@
-from .scr_benchmark import SCRBenchmark
+from .benchmark import Benchmark
 from .SRSDFeynman import AllEquations
-import sympy
-import numpy as np
 import pandas as pd
-import copy
 import os
-import SCR_Benchmarks.Constants.StringKeys as sk
+import SCRBenchmark.Constants.StringKeys as sk
 
 SAMPLING_PATIENCE = 10
 HARD_SAMPLE_SIZES = [100,1000]
@@ -65,7 +62,7 @@ FEYNMAN_SRSD_HARD = [
 ,'FeynmanBonus20'
 ]
 
-class SCRBenchmarkSuite(object):
+class BenchmarkSuite(object):
     _eq_name = None
 
     def __init__(self):
@@ -79,7 +76,7 @@ class SCRBenchmarkSuite(object):
         os.makedirs(target_folder)
       for equation_name in Equations:
         print(equation_name)
-        benchmark = SCRBenchmark(AllEquations[equation_name],initialize_constraint_checking_datasets=False)
+        benchmark = Benchmark(AllEquations[equation_name],initialize_constraint_checking_datasets=False)
         equation_folder = f'{target_folder}/{equation_name}'
 
         if not os.path.exists(equation_folder):
@@ -99,7 +96,7 @@ class SCRBenchmarkSuite(object):
           
         for sample_size in sample_sizes:
           for noise_level in noise_levels:
-              if(not SCRBenchmarkSuite.create_individual_dataset(target_folder,
+              if(not BenchmarkSuite.create_individual_dataset(target_folder,
                                                     equation_name,
                                                     benchmark,
                                                     equation_folder,

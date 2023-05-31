@@ -1,12 +1,12 @@
 """
-    SCRBenchmarks
+    SCRBenchmark
 """
 
 
 from setuptools import setup, find_packages  # noqa: H301
 
-NAME = "SCR_Benchmarks"
-VERSION = "0.2.0"
+NAME = "SCRBenchmark"
+VERSION = "0.3.0"
 # To install the library, run the following
 #
 # python setup.py install
@@ -30,7 +30,7 @@ setup(
     keywords=["Benchmark","Shape Constrained Regression", "Symbolic Regression", "SymReg"],
     python_requires=">=3.6",
     install_requires=REQUIRES,
-    packages=find_packages(exclude=["test", "tests","example","examples"]),
+    packages=find_packages(exclude=["test", "tests","example","examples","generate",]),
     include_package_data=True,
     long_description="""\
     No description provided

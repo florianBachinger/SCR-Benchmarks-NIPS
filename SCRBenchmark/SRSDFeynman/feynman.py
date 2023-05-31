@@ -14,10 +14,10 @@ from collections import OrderedDict
 import numpy as np
 import sympy
 
-from SCR_Benchmarks.Constants import StringKeys as sk
-from SCR_Benchmarks.base import KnownEquation
-from SCR_Benchmarks.registry import register_eq_class
-from SCR_Benchmarks.sampling import DefaultSampling, IntegerSampling, SimpleSampling
+from SCRBenchmark.Constants import StringKeys as sk
+from SCRBenchmark.base import KnownEquation
+from SCRBenchmark.registry import register_eq_class
+from SCRBenchmark.sampling import DefaultSampling, IntegerSampling, SimpleSampling
 
 FEYNMAN_EQUATION_CLASS_DICT = OrderedDict()
 GRAVITATIONAL_CONSTANT = 6.67430e-11

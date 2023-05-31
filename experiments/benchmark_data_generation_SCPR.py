@@ -1,9 +1,9 @@
-from SCR_Benchmarks.suite import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
-from SCR_Benchmarks.suite import SCRBenchmarkSuite
+from SCRBenchmark import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
+from SCRBenchmark import BenchmarkSuite
 import json
 import numpy as np
 
-target_folder = './scpr_experiments/data'
+target_folder = './experiments/data'
 
 Degrees = [1,2,3,4,5,6,7]
 Lambdas = [10**-7,10**-6,10**-5,10**-4,10**-3,10**-2,10**-1,1,10]
@@ -14,7 +14,7 @@ print('generating instances')
 #creates one folder per equation under the parent folder
 # each equation folder contains the info file as json
 # and the data files for each configuration as csv
-SCRBenchmarkSuite.create_hard_instances(target_folder = target_folder,
+BenchmarkSuite.create_hard_instances(target_folder = target_folder,
                                         Equations= FEYNMAN_SRSD_HARD,
                                         sample_sizes=HARD_SAMPLE_SIZES,
                                         noise_levels=HARD_NOISE_LEVELS)

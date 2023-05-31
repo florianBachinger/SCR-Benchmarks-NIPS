@@ -1,4 +1,4 @@
-# Shap-Constrained Regression (SCR) Benchmarks
+# Shape-Constrained Regression (SCR) Benchmarks
 This repository serves as a benchmark suite for shape-constrained regression algorithms, which can integrate prior knowledge about the expected shape of the prediction function.
 
 Our benchmark suite builds upon [established benchmarks for symbolic regression](#credit) and extends them in functionality. We provide python code used to generate benchmark data for experiments, a set of test datasets for ease of result comparison, and the ability to check if a function adheres to the specified constraints.
@@ -6,42 +6,40 @@ Our benchmark suite builds upon [established benchmarks for symbolic regression]
 # Usage
 
 See our `examples` folder for more code snippets and usage examples. 
-This readme only provides a summary of the key features.
+This summary highlights the key features.
 
 
 ## Generate Benchmark Data
 
 ```python
-from SCR_Benchmarks.suite import FEYNMAN_SRSD_HARD, HARD_TRAIN_TEST_SPLIT, HARD_NOISE_LEVELS,HARD_SAMPLE_SIZE
-from SCR_Benchmarks.suite import SCRBenchmarkSuite
+from SCRBenchmark import FEYNMAN_SRSD_HARD,HARD_NOISE_LEVELS,HARD_SAMPLE_SIZES
+from SCRBenchmark import BenchmarkSuite
 
 #creates one folder per equation under the parent folder
 # each equation folder contains the info file as json
 # and the data files for each configuration as csv
-SCRBenchmarkSuite.create_hard_instances(target_folder = './data',
+BenchmarkSuite.create_hard_instances(target_folder = './data',
                                         Equations=FEYNMAN_SRSD_HARD,
-                                        sample_size=HARD_SAMPLE_SIZE,
-                                        train_test_splits=HARD_TRAIN_TEST_SPLIT,
+                                        sample_sizes=HARD_SAMPLE_SIZES,
                                         noise_levels=HARD_NOISE_LEVELS)
 ```
 
 ## Generate Benchmark Data for individual equations
 
 ```python
-import SCR_Benchmarks.SRSDFeynman as srsdf
-from SCR_Benchmarks import SCRBenchmark
+import SCRBenchmark.SRSDFeynman as srsdf
+from SCRBenchmark import Benchmark
 
-ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20)
-
+ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20)
 (training, test) = ICh6Eq20.create_dataset(sample_size=1000, patience= 10, noise_level = 0)
 ```
 
 ## Check if functions adhere to constraints
 ```python
-import SCR_Benchmarks.SRSDFeynman as srsdf
-from SCR_Benchmarks import SCRBenchmark
+import SCRBenchmark.SRSDFeynman as srsdf
+from SCRBenchmark import Benchmark
 
-ICh6Eq20 = SCRBenchmark(srsdf.FeynmanICh6Eq20)
+ICh6Eq20 = Benchmark(srsdf.FeynmanICh6Eq20)
 # Raw: exp(-(theta / sigma) ** 2 / 2) / (sqrt(2 * pi) * sigma)
 # is monotonic increasing over theta in -inf. <= theta <= 0
 # is monotonic decreasing over theta in 0 <= theta <= inf.
@@ -75,7 +73,7 @@ pip install git+https://github.com/florianBachinger/SCR-Benchmarks-NIPS.git
 
 Then import the package:
 ```python
-import SCR_Benchmarks
+import SCRBenchmark
 ```
 
 ### Setuptools
@@ -89,13 +87,13 @@ python setup.py install --user
 
 Then import the package:
 ```python
-import SCR_Benchmarks
+import SCRBenchmark
 ```
 
 # References
 
 ## Citations
-Reference this work:
+Cite this work:
 
 ```bibtex
 will be added in future

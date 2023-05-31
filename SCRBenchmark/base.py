@@ -14,12 +14,10 @@ import warnings
 import numpy as np
 import pandas as pd
 import sympy
-import copy
 from sympy import Derivative, Matrix, Symbol, simplify, solve, lambdify
-from sympy.utilities.misc import func_name
-import SCR_Benchmarks.Constants.StringKeys as sk
+import SCRBenchmark.Constants.StringKeys as sk
 
-from SCR_Benchmarks.Data.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
+from SCRBenchmark.Data.feynman_srsd_info import SRSD_EQUATION_CONFIG_DICT as SRSDConfig
 
 
 FLOAT32_MAX = np.finfo(np.float32).max
