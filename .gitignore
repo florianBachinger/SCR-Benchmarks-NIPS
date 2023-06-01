@@ -165,3 +165,5 @@ pyvenv.cfg
 results/experiments
 results/visualization
 data/*/*.csv
+experiments/repeated_best_config_data
+experiments/gridsearch_data

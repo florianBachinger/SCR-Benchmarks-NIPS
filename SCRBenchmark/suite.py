@@ -71,7 +71,8 @@ class BenchmarkSuite(object):
     def create_hard_instances( target_folder = './data',
                               Equations = FEYNMAN_SRSD_HARD,
                               sample_sizes = HARD_SAMPLE_SIZES,
-                              noise_levels = HARD_NOISE_LEVELS):
+                              noise_levels = HARD_NOISE_LEVELS,
+                              repetitions = None):
       if not os.path.exists(target_folder):
         os.makedirs(target_folder)
       for equation_name in Equations:
@@ -96,14 +97,29 @@ class BenchmarkSuite(object):
           
         for sample_size in sample_sizes:
           for noise_level in noise_levels:
-              if(not BenchmarkSuite.create_individual_dataset(target_folder,
-                                                    equation_name,
-                                                    benchmark,
-                                                    equation_folder,
-                                                    noise_level,
-                                                    sample_size,
-                                                    individual_patience = 40)):
-                raise Warning(f"could not generate dataset for {equation_name} and sample_size {sample_size} noise_level {noise_level}")
+              if(repetitions is None):
+                if(not BenchmarkSuite.create_individual_dataset(target_folder,
+                                                      equation_name,
+                                                      benchmark,
+                                                      equation_folder,
+                                                      noise_level,
+                                                      sample_size,
+                                                      individual_patience = 40
+                                                      )):
+                  raise Warning(f"could not generate dataset for {equation_name} and sample_size {sample_size} noise_level {noise_level}")
+              else:
+                 for repetition in range(0,repetitions):
+                   if(not BenchmarkSuite.create_individual_dataset(target_folder,
+                                                      equation_name,
+                                                      benchmark,
+                                                      equation_folder,
+                                                      noise_level,
+                                                      sample_size,
+                                                      individual_patience = 40,
+                                                      file_prefix='',
+                                                      file_suffix = f'_repetition{repetition}'
+                                                      )):
+                      raise Warning(f"could not generate dataset for {equation_name} and sample_size {sample_size} noise_level {noise_level}")   
          
 
     def create_individual_dataset(target_folder,
@@ -112,9 +128,13 @@ class BenchmarkSuite(object):
                                     equation_folder, 
                                     noise_level,
                                     sample_size, 
-                                    individual_patience = 10):
-        if os.path.exists(f'{equation_folder}/{equation_name}_sample_size{sample_size}_noise_level{noise_level}.csv'):
+                                    individual_patience = 10,
+                                    file_prefix = None,
+                                    file_suffix = None):
+        target_file = f'{equation_folder}/{file_prefix}{equation_name}_sample_size{sample_size}_noise_level{noise_level}{file_suffix}.csv'
+        if os.path.exists(target_file):
            return True
+        
         for i in range(1, individual_patience):
           try:
 
@@ -125,7 +145,7 @@ class BenchmarkSuite(object):
             training['split'] = ['training'] * len(training)
             test['split'] = ['test'] * len(test)
             combined = pd.concat([training,test])
-            combined.to_csv(f'{equation_folder}/{equation_name}_sample_size{sample_size}_noise_level{noise_level}.csv', index = False)
+            combined.to_csv(target_file, index = False)
             return True
           except:
               print(f'error in {equation_name} with try {i}/{individual_patience}')
