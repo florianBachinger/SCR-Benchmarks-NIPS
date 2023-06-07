@@ -1,7 +1,9 @@
 # Shape-Constrained Regression (SCR) Benchmarks
 This repository serves as a benchmark suite for shape-constrained regression algorithms, which can integrate prior knowledge about the expected shape of the prediction function.
 
-Our benchmark suite builds upon [established benchmarks for symbolic regression](#credit) and extends them in functionality. We provide python code used to generate benchmark data for experiments, a set of test datasets for ease of result comparison, and the ability to check if a function adheres to the specified constraints.
+Our benchmark suite builds upon [established benchmarks for symbolic regression](#credit) and extends them in functionality. We provide python code for generating training data for experiments, a set of validation datasets for result comparison, and the ability to check if a function adheres to the specified constraints.
+
+
 
 ## Usage
 
@@ -57,6 +59,15 @@ print(ICh6Eq20.check_constraints("-theta",use_display_names=True))
 print(ICh6Eq20.check_constraints("(theta*theta)",use_display_names=True))
 ```
 
+## Results
+We will continuously report on results using benchmark set. Current _preliminary_ results available for the 18 Feynman bonus equations using shape-constrained polynomial regression (SCPR). The detailed results of SCPR are published in our separate [SCR-Benchmark SCPR result repository](https://github.com/florianBachinger/SCR-Benchmark-SCPR). The methodology and experimental setup are described in our publication.
+
+![results](./results/summary.png)
+
+| Approach |Description | URL |
+|----------|-------------|-----|
+|SCPR | shape-constrained polynomial regression | [SCPR result repository](https://github.com/florianBachinger/SCR-Benchmark-SCPR) |
+
 ## Installation 
 
 ### pip install
@@ -67,20 +78,6 @@ If the python package is hosted on a repository, you can install directly using:
 pip install git+https://github.com/florianBachinger/SCR-Benchmarks-NIPS.git
 ```
 (you may need to run `pip` with root permission: `sudo pip install git+https://github.com/florianBachinger/SCR-Benchmarks-NIPS.git`)
-
-Then import the package:
-```python
-import SCRBenchmark
-```
-
-### Setuptools
-
-Install via [Setuptools](http://pypi.python.org/pypi/setuptools).
-
-```sh
-python setup.py install --user
-```
-(or `sudo python setup.py install` to install the package for all users)
 
 Then import the package:
 ```python
