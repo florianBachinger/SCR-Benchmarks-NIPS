@@ -60,7 +60,7 @@ print(ICh6Eq20.check_constraints("(theta*theta)",use_display_names=True))
 ```
 
 ## Results
-We will continuously report on results using benchmark set. Current _preliminary_ results available for the 18 Feynman bonus equations using shape-constrained polynomial regression (SCPR). The detailed results of SCPR are published in our separate [SCR-Benchmark SCPR result repository](https://github.com/florianBachinger/SCR-Benchmark-SCPR). The methodology and experimental setup are described in our publication.
+We will continuously report on results using benchmark set. Current _preliminary_ results are available for the 18 Feynman bonus equations using shape-constrained polynomial regression (SCPR). The detailed results of SCPR are published in our separate [SCR-Benchmark SCPR result repository](https://github.com/florianBachinger/SCR-Benchmark-SCPR). The methodology and experimental setup are described in our publication.
 
 ![results](./results/summary.png)
 
