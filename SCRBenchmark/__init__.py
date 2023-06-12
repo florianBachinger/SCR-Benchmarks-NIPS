@@ -5,7 +5,7 @@
 """
 
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 # import ApiClient
 from SCRBenchmark import SRSDFeynman
@@ -17,6 +17,7 @@ from .base import create_dataset_from_sampling_objectives
 from .base import KnownEquation
 from .benchmark import Benchmark
 from .suite import BenchmarkSuite
+from .seeds import SEEDS
 from .suite import HARD_NOISE_LEVELS, HARD_SAMPLE_SIZES,FEYNMAN_SRSD_HARD
 
 

@@ -37,8 +37,11 @@ class Benchmark(object):
         file = os.path.join(os.path.dirname(__file__),f'Data/Test/{self.equation.get_eq_name()}.csv')
         return pd.read_csv(file)
     
-    def create_dataset(self, sample_size, patience = 10, noise_level = 0 ):
+    def create_dataset(self, sample_size,  noise_level = 0, seed = None, patience = 10 ):
         assert (0<=noise_level and noise_level<=1), f'noise_level must be in [0,1]'
+
+        if(not (seed is None)):
+          np.random.seed(seed)
 
         xs = self.equation.create_dataset(sample_size,patience)
 
@@ -48,8 +51,11 @@ class Benchmark(object):
 
         return (xs, self.read_test_dataframe().to_numpy())
     
-    def create_dataframe(self,sample_size,patience = 10, train_test_split = 0.8, noise_level = 0,use_display_name = False ):
-       (train, test) = self.create_dataset(sample_size,patience,noise_level)
+    def create_dataframe(self,sample_size, noise_level = 0, seed = None, patience = 10, use_display_name = False ):
+       (train, test) = self.create_dataset(sample_size=sample_size,
+                                           noise_level=noise_level,
+                                           seed= seed,
+                                           patience = patience)
        train_df = self.equation.to_dataframe(train,use_display_name)
        test_df = self.equation.to_dataframe(test,use_display_name)
        return (train_df,test_df)

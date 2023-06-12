@@ -3,11 +3,11 @@ from .SRSDFeynman import AllEquations
 import pandas as pd
 import os
 import SCRBenchmark.Constants.StringKeys as sk
+from .seeds import SEEDS
 
 SAMPLING_PATIENCE = 10
 HARD_SAMPLE_SIZES = [100,1000]
 HARD_NOISE_LEVELS = [0,0.05,0.1,0.15,0.2]
-
 
 FEYNMAN_SRSD_HARD = [
 'FeynmanICh6Eq20a'
@@ -73,6 +73,9 @@ class BenchmarkSuite(object):
                               sample_sizes = HARD_SAMPLE_SIZES,
                               noise_levels = HARD_NOISE_LEVELS,
                               repetitions = None):
+      if repetitions > len(SEEDS):
+        raise ValueError(f"Only {len(SEEDS)} seeds are predefined. If you change local settings, please report on this fact in your publication and publish the updated seeds in e.g. your repository.")   
+
       if not os.path.exists(target_folder):
         os.makedirs(target_folder)
       for equation_name in Equations:
@@ -104,17 +107,21 @@ class BenchmarkSuite(object):
                                                       equation_folder,
                                                       noise_level,
                                                       sample_size,
-                                                      individual_patience = 40
+                                                      seed = SEEDS[0],
+                                                      individual_patience = 40,
                                                       )):
                   raise Warning(f"could not generate dataset for {equation_name} and sample_size {sample_size} noise_level {noise_level}")
+              
               else:
                  for repetition in range(0,repetitions):
+                   
                    if(not BenchmarkSuite.create_individual_dataset(target_folder,
                                                       equation_name,
                                                       benchmark,
                                                       equation_folder,
                                                       noise_level,
                                                       sample_size,
+                                                      seed = SEEDS[repetition],
                                                       individual_patience = 40,
                                                       file_prefix='',
                                                       file_suffix = f'_repetition{repetition}'
@@ -128,19 +135,20 @@ class BenchmarkSuite(object):
                                     equation_folder, 
                                     noise_level,
                                     sample_size, 
+                                    seed,
                                     individual_patience = 10,
-                                    file_prefix = None,
-                                    file_suffix = None):
+                                    file_prefix = '',
+                                    file_suffix = ''):
         target_file = f'{equation_folder}/{file_prefix}{equation_name}_sample_size{sample_size}_noise_level{noise_level}{file_suffix}.csv'
         if os.path.exists(target_file):
            return True
         
         for i in range(1, individual_patience):
           try:
-
             (training, test) = benchmark.create_dataframe(sample_size=sample_size,
-                                                                  patience = individual_patience,
                                                                   noise_level=noise_level,
+                                                                  seed = seed,
+                                                                  patience = individual_patience,
                                                                   use_display_name = False)
             training['split'] = ['training'] * len(training)
             test['split'] = ['test'] * len(test)

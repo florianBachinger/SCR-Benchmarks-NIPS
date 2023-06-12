@@ -6,7 +6,7 @@
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "SCRBenchmark"
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 # To install the library, run the following
 #
 # python setup.py install
@@ -15,9 +15,9 @@ VERSION = "0.3.0"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
-  "numpy >= 1.23.1",
-  "sympy >= 1.11.1",
-  "pandas >= 2.0.1",
+  "numpy==1.24.3",
+  "sympy==1.11.1",
+  "pandas==2.0.1",
 ]
 
 setup(
