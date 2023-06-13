@@ -25,8 +25,6 @@ BenchmarkSuite.create_hard_instances(target_folder=folder2
                                      , noise_levels=HARD_NOISE_LEVELS
                                      , repetitions= 2 )
 
-rootdir = 'C:/Users/sid/Desktop/test'
-
 for subdir, dirs, files in os.walk(folder1):
   for file in files:
     folder2Subdir = subdir.replace(folder1,folder2)

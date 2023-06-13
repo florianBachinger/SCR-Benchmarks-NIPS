@@ -102,13 +102,12 @@ class BenchmarkSuite(object):
           for noise_level in noise_levels:
               if(repetitions is None):
                 if(not BenchmarkSuite.create_individual_dataset(target_folder,
-                                                      equation_name,
                                                       benchmark,
                                                       equation_folder,
                                                       noise_level,
                                                       sample_size,
                                                       seed = SEEDS[0],
-                                                      individual_patience = 40,
+                                                      sampling_patience = 40,
                                                       )):
                   raise Warning(f"could not generate dataset for {equation_name} and sample_size {sample_size} noise_level {noise_level}")
               
@@ -116,13 +115,12 @@ class BenchmarkSuite(object):
                  for repetition in range(0,repetitions):
                    
                    if(not BenchmarkSuite.create_individual_dataset(target_folder,
-                                                      equation_name,
                                                       benchmark,
                                                       equation_folder,
                                                       noise_level,
                                                       sample_size,
                                                       seed = SEEDS[repetition],
-                                                      individual_patience = 40,
+                                                      sampling_patience = 40,
                                                       file_prefix='',
                                                       file_suffix = f'_repetition{repetition}'
                                                       )):
@@ -130,25 +128,25 @@ class BenchmarkSuite(object):
          
 
     def create_individual_dataset(target_folder,
-                                    equation_name,
                                     benchmark,
                                     equation_folder, 
                                     noise_level,
                                     sample_size, 
                                     seed,
-                                    individual_patience = 10,
+                                    sampling_patience = 40,
                                     file_prefix = '',
                                     file_suffix = ''):
+        equation_name = benchmark._eq_name
         target_file = f'{equation_folder}/{file_prefix}{equation_name}_sample_size{sample_size}_noise_level{noise_level}{file_suffix}.csv'
         if os.path.exists(target_file):
            return True
         
-        for i in range(1, individual_patience):
+        for i in range(1, sampling_patience):
           try:
             (training, test) = benchmark.create_dataframe(sample_size=sample_size,
                                                                   noise_level=noise_level,
                                                                   seed = seed,
-                                                                  patience = individual_patience,
+                                                                  patience = sampling_patience,
                                                                   use_display_name = False)
             training['split'] = ['training'] * len(training)
             test['split'] = ['test'] * len(test)
@@ -156,7 +154,7 @@ class BenchmarkSuite(object):
             combined.to_csv(target_file, index = False)
             return True
           except:
-              print(f'error in {equation_name} with try {i}/{individual_patience}')
+              print(f'error in {equation_name} with try {i}/{sampling_patience}')
 
         return False
 
