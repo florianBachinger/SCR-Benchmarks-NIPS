@@ -2,10 +2,11 @@ import SCRBenchmark.base as base
 import sympy
 import numpy as np
 import pandas as pd
+import warnings
 import os
 import SCRBenchmark.Constants.StringKeys as sk
 from SCRBenchmark.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
-CONSTRAINT_SAMPLING_SIZE = 1_000_000
+CONSTRAINT_SAMPLING_SIZE = 100_000
 
 class Benchmark(object):
     _eq_name = None
@@ -24,7 +25,7 @@ class Benchmark(object):
     def read_datasets_for_constraint_checking(self):
       constraints = [c for c in self.constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
       if(len(constraints) == 0):
-          raise Warning( f"equation {self.equation._eq_name} has to have constraints to be checked. all checks will return true.")
+          warnings.warn( f"equation {self.equation._eq_name} has to have constraints to be checked. all checks will return true.")
       self.datasets = {}
       for constraint in constraints:
           sample_space = constraint[sk.EQUATION_CONSTRAINTS_SAMPLE_SPACE_KEY]
@@ -89,7 +90,7 @@ class Benchmark(object):
                  in local_dict.values()]
       
       #calculate all second order partial derivatives of the expression (every possible combination [Hessian])
-      f_prime_mat = [[ (sympy.Derivative(f_prime, var).doit(), f'[{prime_var_name},{var}]', 2 ) 
+      f_prime_mat = [[ (sympy.Derivative(f_prime, var).doit(), [prime_var_name,var.name], 2 ) 
                         for var
                         in local_dict.values()] 
                      for (f_prime, prime_var_name, _) 
