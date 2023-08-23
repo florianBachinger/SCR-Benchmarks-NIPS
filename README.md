@@ -64,6 +64,7 @@ print(ICh6Eq20.check_constraints("(theta*theta)",use_display_names=True))
 We will continuously report on results using benchmark set. Currently, only results using shape-constrained polynomial regression (SCPR) are available. We run this algorithm with three different settings to showcase how comparison of algorithms will look like in the future. The detailed results of SCPR are published in our separate [SCR-Benchmark SCPR result repository](https://github.com/florianBachinger/SCR-Benchmark-SCPR). The methodology and experimental setup are described in our publication.
 
 ![results](/results/summary.png)
+
 Image shows the validation $R^2$ for different training set sizes and noise levels present in the training data. The training data is generated using provided seeds to assure fair comparison over all benchmark instances. The validation dataset is fixed and included in this repository and its python package. There is no noise present in the validation data. 
 
 | Approach |Description | URL |
