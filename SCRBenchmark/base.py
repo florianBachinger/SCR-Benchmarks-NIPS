@@ -68,9 +68,10 @@ def get_constraint_descriptor( eq, local_dict, xs):
     # speedup of 5:
     f_v = np.vectorize(f)
     gradients = f_v(*(xs.T))
+    return get_constraint_descriptor_for_gradients(gradients)
 
+def get_constraint_descriptor_for_gradients( gradients):
     unique_gradient_signs = set(np.unique(np.sign(gradients)))
-
     if((unique_gradient_signs ==  set([-1])) or (unique_gradient_signs ==  set([-1, 0]))):
       descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_MONOTONIC_DECREASING_CONSTRAINT
     elif ((unique_gradient_signs ==  set([1])) or (unique_gradient_signs ==  set([0, 1]))):
@@ -82,7 +83,6 @@ def get_constraint_descriptor( eq, local_dict, xs):
     else:
       raise "Unforseen sign values!"
     return descriptor
-
 
 class KnownEquation(object):
     _eq_name = None

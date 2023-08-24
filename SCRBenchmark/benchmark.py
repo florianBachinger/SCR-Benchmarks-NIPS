@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import warnings
 import os
+import jax
 import SCRBenchmark.Constants.StringKeys as sk
 from SCRBenchmark.Data.feynman_srsdf_constraint_info import SRSD_EQUATION_CONSTRAINTS as SRSDFConstraints
 CONSTRAINT_SAMPLING_SIZE = 100_000
@@ -65,12 +66,20 @@ class Benchmark(object):
       if(self.equation.get_eq_source() == sk.SRSDF_SOURCE_QUALIFIER):
           return next(x[sk.EQUATION_CONSTRAINTS_CONSTRAINTS_KEY] for x in SRSDFConstraints if x[sk.EQUATION_EQUATION_NAME_KEY] == self.equation.get_eq_name())
           
-    def check_constraints (self, equation_candidate, use_display_names = False):
+    def check_constraints (self, f, Library = "SymPy", use_display_names = False):
+      if(Library == "SymPy"):
+        return self.check_constraints_SymPy (f, use_display_names)
+      elif(Library == "JAX"):
+        return self.check_constraints_JAX (f, use_display_names)
+      else:
+        raise RuntimeError(f"Specified library '{Library}' is not supported.")
+       
+    def check_constraints_SymPy (self, f, use_display_names = False):
       constraints = self.get_constraints()
 
       constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
       if(len(constraints) == 0):
-          return True #no constraints to check
+          return (True, []) #no constraints to check
       
       if(self.datasets is None):
           self.read_datasets_for_constraint_checking()
@@ -82,7 +91,7 @@ class Benchmark(object):
 
       # parse the provided candidate expression
       # will use display names if specified
-      expr = sympy.parse_expr(equation_candidate, evaluate=False, local_dict= local_dict)
+      expr = sympy.parse_expr(f, evaluate=False, local_dict= local_dict)
 
       #calculate all first order partial derivatives of the expression 
       f_primes = [(sympy.Derivative(expr, var).doit(),var.name, 1) 
@@ -121,6 +130,56 @@ class Benchmark(object):
 
         #does the calculated (sampled) gradient for the current derivative match the constraint description
         descriptor = base.get_constraint_descriptor(derivative, local_dict.keys(), xs)
+        if(descriptor != constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
+            violated_constraints.append(constraint)
+
+      return (len(violated_constraints) == 0, violated_constraints)
+    
+    def check_constraints_JAX (self, f, use_display_names = False):
+      constraints = self.get_constraints()
+
+      constraints = [c for c in constraints if c[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]!=sk.EQUATION_CONSTRAINTS_DESCRIPTOR_NO_CONSTRAINT]
+      if(len(constraints) == 0):
+          return (True, []) #no constraints to check
+      
+      if(self.datasets is None):
+          self.read_datasets_for_constraint_checking()
+
+      # replace the sympy local dictionary with the display names of variables if specified
+      var_names = [v.name for v in self.equation.get_vars()]
+
+      g = jax.jit(jax.grad(f))
+      hessian = jax.jit(jax.hessian(f))
+      
+      violated_constraints = []
+      #check for all existing constraints if they are met
+      for constraint in constraints:
+        #every constraint has a specific input range in which they apply
+        xs = self.datasets[constraint[sk.EQUATION_CONSTRAINTS_ID_KEY]]
+
+        var_name_constraint = constraint[sk.EQUATION_CONSTRAINTS_VAR_NAME_KEY]
+        descriptor = sk.EQUATION_CONSTRAINTS_DESCRIPTOR_UNKOWN_CONSTRAINT
+
+        # checking the different types of constraints supported
+        if(constraint[sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY] == 1):
+          #constraint is defined for the first order derivative
+          # the signs of the functions gradient are to be checked for the input domain
+          var_index = var_names.index(var_name_constraint)
+          gradients = y = jax.vmap(g)(xs) 
+          var_gradients = gradients[:,var_index]
+          descriptor = base.get_constraint_descriptor_for_gradients(var_gradients)
+
+        elif(constraint[sk.EQUATION_CONSTRAINTS_ORDER_DERIVATIVE_KEY] == 2):
+          var1_index = var_names.index(var_name_constraint[0])
+          var2_index = var_names.index(var_name_constraint[1])
+          hessian_gradients = jax.vmap(hessian)(xs) 
+          var_gradients = hessian_gradients[:,var1_index,var2_index]
+          descriptor = base.get_constraint_descriptor_for_gradients(var_gradients)
+
+        else:
+          raise "constraint was available but it was not handled/checked"
+
+
         if(descriptor != constraint[sk.EQUATION_CONSTRAINTS_DESCRIPTOR_KEY]):
             violated_constraints.append(constraint)
 
