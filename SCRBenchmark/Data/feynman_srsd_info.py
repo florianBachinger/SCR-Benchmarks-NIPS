@@ -104,7 +104,7 @@ SRSD_EQUATION_CONFIG_DICT = {
     "FeynmanICh15Eq3x": {
         "EquationRaw" : "(x - u * t) / sqrt(1 - u ** 2 / 2.99792458e8 ** 2)",
         "variables" : ["x","u","t"],
-        "output" : "x1"
+        "output" : "x_1"
     },
   
     "FeynmanICh15Eq3t": {
