@@ -32,8 +32,8 @@ ax[0].set_ylim([0,10])
 leg = ax[0].legend(facecolor='white', framealpha=1, loc='upper left', bbox_to_anchor=(0.55, 0.99))
 # leg = plt.legend(loc='lower right', bbox_to_anchor=(0.1, 0.1))
 for lh in leg.legendHandles: 
-    # lh.set_alpha(1)
-    # lh.set_linewidth(1.5)
+    lh.set_alpha(1)
+    lh.set_linewidth(1.5)
     lh.set_sizes([16.0])
 
 
